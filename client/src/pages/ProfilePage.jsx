@@ -31,6 +31,7 @@ const ProfilePage = () => {
   useEffect(() => {
     let cancelled = false;
     const fetchProfile = async () => {
+      setProfileData(null);
       setLoading(true);
       setError('');
       try {
@@ -42,7 +43,11 @@ const ProfilePage = () => {
         }
       } catch (e) {
         if (!cancelled) {
-          setError('No se pudo cargar el perfil.');
+          if (e.response?.status === 404) {
+            navigate('/', { state: { error: 'Perfil no encontrado', status: 404 } });
+          } else {
+            setError('No se pudo cargar el perfil.');
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -52,7 +57,7 @@ const ProfilePage = () => {
     return () => {
       cancelled = true;
     };
-  }, [username]);
+  }, [username, navigate]);
 
   const handleFollowToggle = async () => {
     if (followLoading) return;
@@ -106,6 +111,7 @@ const ProfilePage = () => {
       <div
         className="profile-hero"
         style={{ backgroundImage: `url(${bannerUrl})` }}
+        loading="lazy"
       >
         <div className="profile-overlay">
           <div className="profile-head">
@@ -113,6 +119,8 @@ const ProfilePage = () => {
               src={profileData.foto_perfil_url || DEFAULT_AVATAR}
               alt="Foto de perfil"
               className="profile-avatar"
+              loading="lazy"
+              decoding="async"
             />
             <div className="profile-main">
               <h2 className="profile-name">{profileData.nombre_perfil}</h2>

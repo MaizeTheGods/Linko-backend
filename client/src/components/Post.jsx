@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef, memo } from 'react';
 import api from '../api/http.js';
 import Comment from './Comment.jsx';
 import { Link, useNavigate } from 'react-router-dom';
@@ -492,4 +492,15 @@ function TrashIcon() {
   );
 }
 
-export default Post;
+const areEqual = (prevProps, nextProps) => {
+  return (
+    prevProps.post?.id_publicacion === nextProps.post?.id_publicacion &&
+    prevProps.post?.me_gusta?.length === nextProps.post?.me_gusta?.length &&
+    prevProps.post?._count?.me_gusta === nextProps.post?._count?.me_gusta &&
+    prevProps.post?._count?.comentarios === nextProps.post?._count?.comentarios &&
+    prevProps.autoOpenComments === nextProps.autoOpenComments &&
+    prevProps.inDetail === nextProps.inDetail
+  );
+};
+
+export default memo(Post, areEqual);

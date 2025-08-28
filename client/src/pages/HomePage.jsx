@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../api/http.js';
 import Post from '../components/Post.jsx';
 import PostSkeleton from '../components/PostSkeleton.jsx';
@@ -6,6 +7,7 @@ import { AuthContext } from '../context/AuthContext.jsx';
 
 const HomePage = () => {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [postContent, setPostContent] = useState('');
   const [files, setFiles] = useState([]);
@@ -13,13 +15,25 @@ const HomePage = () => {
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(location.state?.error || '');
+  const [show404, setShow404] = useState(location.state?.status === 404);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef(null);
+
+  // Clear error after 5 seconds
+  useEffect(() => {
+    if (show404) {
+      const timer = setTimeout(() => {
+        setShow404(false);
+        setError('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [show404]);
 
   const fetchPosts = async (nextPage = 1, append = false) => {
     try {
@@ -257,6 +271,7 @@ const HomePage = () => {
         
       </form>
       {error && <p style={{ color: 'var(--primary)' }}>{error}</p>}
+      {show404 && <p style={{ color: 'var(--primary)' }}>Página no encontrada.</p>}
       <hr />
       <h3>Feed de Publicaciones</h3>
       <div>
@@ -328,4 +343,3 @@ function SendIcon() {
     </svg>
   );
 }
-

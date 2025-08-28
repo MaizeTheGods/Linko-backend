@@ -18,6 +18,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Add cache busting parameter
+api.interceptors.request.use((config) => {
+  config.params = {
+    ...config.params,
+    _v: Date.now()
+  };
+  return config;
+});
+
 // Redirect to login on 401 and clear token
 api.interceptors.response.use(
   (response) => response,

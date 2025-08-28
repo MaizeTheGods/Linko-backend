@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
@@ -23,6 +23,7 @@ const PostDetailPage = React.lazy(() => import('./pages/PostDetailPage.jsx'));
 
 function App() {
   const isMobile = useIsMobile(900);
+  const location = useLocation();
   return (
     <Router>
       <div className="app-shell">
@@ -94,7 +95,7 @@ function App() {
             path="/perfil/:username"
             element={
               <ProtectedRoute>
-                <ProfilePage />
+                <ProfilePage key={location.pathname} />
               </ProtectedRoute>
             }
           />

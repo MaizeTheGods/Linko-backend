@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import compression from 'compression';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './api/authRoutes.js';
 import userRoutes from './api/userRoutes.js';
@@ -11,6 +12,7 @@ import uploadRoutes from './api/uploadRoutes.js';
 import dmRoutes from './api/dmRoutes.js';
 import searchRoutes from './api/searchRoutes.js';
 import notificationsRoutes from './api/notificationsRoutes.js';
+import errorHandler from './middleware/errorMiddleware';
 
 // Cargar las variables de entorno del archivo .env
 dotenv.config();
@@ -36,6 +38,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+app.use(compression()); // Agregar compresión gzip
 app.use(express.json()); // Permite al servidor entender JSON
 
 // Rutas de la API
@@ -74,6 +77,9 @@ process.on('uncaughtException', (err) => {
     stack: err?.stack?.split('\n').slice(0, 3).join(' | '),
   });
 });
+
+// Error handling (must be last middleware)
+app.use(errorHandler);
 
 // Iniciar el servidor para que escuche peticiones
 app.listen(PORT, () => {
