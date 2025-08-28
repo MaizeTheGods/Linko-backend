@@ -1,12 +1,32 @@
-# React + Vite
+# Linko Frontend (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Local development
 
-Currently, two official plugins are available:
+```bash
+npm install
+npm run dev
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+By default, the app calls the API at `http://localhost:3000/api`.
+To point to a hosted backend, set `VITE_API_URL`.
 
-## Expanding the ESLint configuration
+Create `.env` based on `.env.example`:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+VITE_API_URL=https://your-backend-on-render.onrender.com/api
+```
+
+## Deploy on Vercel
+
+1. Import this repository in Vercel.
+2. Project settings → Environment Variables:
+   - `VITE_API_URL = https://<your-render-backend>/api`
+3. Build command: default (Vercel auto-detects Vite)
+4. Output: auto (Vercel handles Vite)
+
+After the first deploy, copy your Vercel URL and add it on the backend as `FRONTEND_ORIGIN`.
+
+## Tech
+
+- React 19, Vite 7, React Router
+- Axios base URL is configured in `src/api/http.js` using `VITE_API_URL` with localhost fallback.
