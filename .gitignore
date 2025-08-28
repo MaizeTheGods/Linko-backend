@@ -1,5 +1,4 @@
-# Root ignores
-node_modules/
+﻿node_modules/
 **/node_modules/
 .DS_Store
 Thumbs.db
@@ -9,18 +8,13 @@ yarn-error.log*
 .pnpm-store/
 .env
 .env.*
-# build outputs
 client/dist/
 server/dist/
 .cache/
-# OS/temp
 .tmp/
 *.tmp
 *.log
-# Prisma
 server/prisma/*.db-journal
 server/prisma/dev.db
-# Vite
 client/.vite/
-# VSCode
 .vscode/
