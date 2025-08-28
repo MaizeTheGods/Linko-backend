@@ -15,5 +15,9 @@
   "type": "commonjs",
   "devDependencies": {
     "concurrently": "^9.2.0"
+  },
+  "dependencies": {
+    "joi": "^17.9.2",
+    "winston": "^3.10.0"
   }
 }
