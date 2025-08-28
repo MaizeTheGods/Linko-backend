@@ -1,0 +1,45 @@
+import { v2 as cloudinary } from 'cloudinary';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Force-load env from server/.env regardless of working directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: envPath, override: true });
+// eslint-disable-next-line no-console
+console.log(`[dotenv] loaded from ${envPath}`);
+
+// Prefer using CLOUDINARY_URL env var (format: cloudinary://<api_key>:<api_secret>@<cloud_name>)
+// Cloudinary's SDK will parse it automatically. If not present, fall back to individual vars.
+const { CLOUDINARY_URL, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = process.env;
+
+if (CLOUDINARY_URL) {
+  // SDK reads CLOUDINARY_URL from process.env; we just enforce secure URLs.
+  cloudinary.config({ secure: true });
+  // eslint-disable-next-line no-console
+  console.log('[Cloudinary] Configured via CLOUDINARY_URL (secure mode)');
+} else if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+  // eslint-disable-next-line no-console
+  console.log('[Cloudinary] Configured via CLOUDINARY_* variables (secure mode)');
+} else {
+  console.warn('[Cloudinary] No configuration found. Set CLOUDINARY_URL or CLOUDINARY_* env vars.');
+}
+
+// Safe diagnostic: show which account/key are active (mask api_key)
+try {
+  const cfg = cloudinary.config();
+  const maskedKey = (cfg.api_key || '').toString();
+  const tail = maskedKey.slice(-4);
+  // eslint-disable-next-line no-console
+  console.log(`[Cloudinary] using cloud "${cfg.cloud_name}" with api_key ending "${tail}"`);
+} catch {}
+
+export default cloudinary;

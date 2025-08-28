@@ -1,0 +1,77 @@
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.form-card {
+  background: var(--card);
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.form-card h2 {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  font-family: inherit;
+}
+
+.form-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-card input {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.form-card button {
+  padding: 0.75rem;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: 1px solid var(--button-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.06s ease-in-out;
+}
+
+.form-card button:hover {
+  background-color: rgba(246, 177, 122, 0.1);
+  border-color: var(--primary);
+}
+
+.error-message {
+  color: var(--primary);
+  margin-top: 1rem;
+}
+
+.form-footnote {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.form-footnote a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.form-footnote a:hover {
+  text-decoration: underline;
+}
