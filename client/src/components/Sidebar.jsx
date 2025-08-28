@@ -37,7 +37,26 @@ function NavItem({ to, title, end, children }) {
 }
 
 const Sidebar = () => {
-  const [username, setUsername] = useState('');
+  // Try to get an initial username from the JWT to avoid falling back to settings
+  const getUsernameFromToken = () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      if (!token) return '';
+      const base64 = token.split('.')[1];
+      const payload = JSON.parse(atob(base64));
+      // Support different claim keys
+      return (
+        payload?.nombre_usuario ||
+        payload?.username ||
+        payload?.user?.username ||
+        ''
+      );
+    } catch {
+      return '';
+    }
+  };
+
+  const [username, setUsername] = useState(getUsernameFromToken());
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
@@ -117,7 +136,8 @@ const Sidebar = () => {
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  const profilePath = username ? `/perfil/${username}` : '/settings/profile';
+  const tokenUsername = getUsernameFromToken();
+  const profilePath = (username || tokenUsername) ? `/perfil/${username || tokenUsername}` : '/settings/profile';
 
   // No swipe/drag on mobile; open via button only
 
