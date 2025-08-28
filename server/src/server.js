@@ -21,9 +21,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares (funciones que se ejecutan en cada petición)
+// CORS dinámico para permitir frontend local y el dominio en producción
+const allowedOrigins = new Set([
+  'http://localhost:5173',
+  process.env.FRONTEND_ORIGIN,
+].filter(Boolean));
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Solo permite solicitudes desde el frontend
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g., curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.has(origin)) return callback(null, true);
+    return callback(new Error('CORS not allowed'), false);
+  },
+  credentials: true,
 }));
 app.use(express.json()); // Permite al servidor entender JSON
 

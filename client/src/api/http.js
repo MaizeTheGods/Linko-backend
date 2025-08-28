@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
-});
+const baseURL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
+  ? import.meta.env.VITE_API_URL
+  : 'http://localhost:3000/api';
+
+const api = axios.create({ baseURL });
 
 // Add Authorization header if token exists
 api.interceptors.request.use((config) => {
