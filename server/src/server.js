@@ -10,6 +10,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enable CORS
+app.use(cors({
+  origin: [
+    'https://linko-backend-ggjpdia54-maizethegods-projects.vercel.app',
+    'http://localhost:3000'
+  ],
+  credentials: true
+}));
+
 // Essential middleware
 app.use(cors({
   origin: [process.env.FRONTEND_URL, 'https://linkosss.vercel.app', 'http://localhost:5173'].filter(Boolean),

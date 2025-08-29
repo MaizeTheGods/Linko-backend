@@ -108,7 +108,7 @@ const Sidebar = () => {
     (async () => {
       try {
         const { data } = await api.get('/users/me');
-        const u = data?.nombre_usuario || data?.username || data?.user?.username || '';
+        const u = data?.nombre_usuario || '';
         if (isMounted) setUsername(u);
       } catch (_) {
         // ignore; falls back to settings/profile
@@ -137,7 +137,11 @@ const Sidebar = () => {
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   const tokenUsername = getUsernameFromToken();
-  const profilePath = `/profile/${username || tokenUsername || 'me'}`;
+  const profilePath = `/profile/${username || tokenUsername}`;
+  if (!username && !tokenUsername) {
+    console.warn('No username available for profile path');
+    return '/profile';
+  }
 
   // No swipe/drag on mobile; open via button only
 
