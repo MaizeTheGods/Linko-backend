@@ -241,7 +241,7 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
       onClick={() => { if (!inDetail) navigate(`/post/${post.id_publicacion}`); }}
       style={{ cursor: inDetail ? 'default' : 'pointer' }}
     >
-      <h4 style={{ margin: 0 }}>{post.usuario?.nombre_perfil || 'Usuario'}</h4>
+      <h4 style={{ margin: 0 }}>{post.usuario?.nombre_perfil ?? 'Usuario'}</h4>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {post.usuario?.nombre_usuario ? (
           <small>
