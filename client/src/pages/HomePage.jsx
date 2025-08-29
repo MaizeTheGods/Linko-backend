@@ -4,6 +4,7 @@ import api from '../api/http.js';
 import Post from '../components/Post.jsx';
 import PostSkeleton from '../components/PostSkeleton.jsx';
 import { AuthContext } from '../context/AuthContext.jsx';
+import Layout from '../components/Layout.jsx';
 
 const HomePage = () => {
   const { user } = useContext(AuthContext);
@@ -173,120 +174,122 @@ const HomePage = () => {
   };
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2 style={{ margin: '6px 0 10px' }}>Inicio</h2>
-      <hr />
-      <h3>Crear una nueva publicación</h3>
-      <form onSubmit={handlePostSubmit}>
-        <textarea
-          value={postContent}
-          onChange={(e) => setPostContent(e.target.value)}
-          placeholder="¿Qué estás pensando?"
-          rows="3"
-          style={{ width: '100%' }}
-        ></textarea>
-        <div style={{ marginTop: 8, color: 'var(--muted)', fontSize: 12 }}>
-          Puedes mencionar usuarios con @usuario. Se incluirán como etiquetas.
-        </div>
-        {/* Composer actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-          {/* Hidden native input + label button */}
-          <input
-            id="composer-files"
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            onChange={(e) => setFiles(Array.from(e.target.files || []))}
-            style={{ display: 'none' }}
-          />
-          <label htmlFor="composer-files" title="Adjuntar archivos" aria-label="Adjuntar archivos" style={{ ...iconBtnStyle(false), cursor: 'pointer' }}>
-            <ClipIcon />
-            <span style={{ fontWeight: 600 }}>{files.length > 0 ? `${files.length} archivo(s)` : 'Adjuntar'}</span>
-          </label>
+    <Layout>
+      <div style={{ padding: 16 }}>
+        <h2 style={{ margin: '6px 0 10px' }}>Inicio</h2>
+        <hr />
+        <h3>Crear una nueva publicación</h3>
+        <form onSubmit={handlePostSubmit}>
+          <textarea
+            value={postContent}
+            onChange={(e) => setPostContent(e.target.value)}
+            placeholder="¿Qué estás pensando?"
+            rows="3"
+            style={{ width: '100%' }}
+          ></textarea>
+          <div style={{ marginTop: 8, color: 'var(--muted)', fontSize: 12 }}>
+            Puedes mencionar usuarios con @usuario. Se incluirán como etiquetas.
+          </div>
+          {/* Composer actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            {/* Hidden native input + label button */}
+            <input
+              id="composer-files"
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files || []))}
+              style={{ display: 'none' }}
+            />
+            <label htmlFor="composer-files" title="Adjuntar archivos" aria-label="Adjuntar archivos" style={{ ...iconBtnStyle(false), cursor: 'pointer' }}>
+              <ClipIcon />
+              <span style={{ fontWeight: 600 }}>{files.length > 0 ? `${files.length} archivo(s)` : 'Adjuntar'}</span>
+            </label>
 
-          <button
-            type="button"
-            onClick={() => setPollEnabled((v) => !v)}
-            title="Encuesta"
-            aria-label="Encuesta"
-            style={{ ...iconBtnStyle(pollEnabled), cursor: 'pointer' }}
-          >
-            <PollIcon />
-            <span style={{ fontWeight: 600 }}>{pollEnabled ? 'Encuesta' : 'Encuesta'}</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setPollEnabled((v) => !v)}
+              title="Encuesta"
+              aria-label="Encuesta"
+              style={{ ...iconBtnStyle(pollEnabled), cursor: 'pointer' }}
+            >
+              <PollIcon />
+              <span style={{ fontWeight: 600 }}>{pollEnabled ? 'Encuesta' : 'Encuesta'}</span>
+            </button>
 
-          <button
-            type="submit"
-            disabled={submitting || (!postContent.trim() && files.length === 0)}
-            title="Publicar"
-            aria-label="Publicar"
-            style={{ ...iconBtnStyle(false), marginLeft: 'auto', cursor: 'pointer' }}
-          >
-            <SendIcon />
-            <span style={{ fontWeight: 700 }}>{submitting ? 'Publicando…' : 'Publicar'}</span>
-          </button>
-        </div>
-        {/* Poll creator (optional) */}
-        <div style={{ marginTop: 8, border: '1px solid var(--border)', background: 'var(--surface)', padding: 8, borderRadius: 8 }}>
-          {pollEnabled && (
-            <div style={{ marginTop: 8 }}>
-              <input
-                type="text"
-                placeholder="Pregunta de la encuesta"
-                value={pollQuestion}
-                onChange={(e) => setPollQuestion(e.target.value)}
-                style={{ width: '100%', marginBottom: 6 }}
-              />
-              {pollOptions.map((opt, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                  <input
-                    type="text"
-                    placeholder={`Opción ${idx + 1}`}
-                    value={opt}
-                    onChange={(e) => setPollOptions((arr) => arr.map((v, i) => (i === idx ? e.target.value : v)))}
-                    style={{ flex: 1 }}
-                  />
-                  {pollOptions.length > 2 && (
-                    <button type="button" onClick={() => setPollOptions((arr) => arr.filter((_, i) => i !== idx))}>-</button>
-                  )}
-                </div>
-              ))}
-              {pollOptions.length < 4 && (
-                <button type="button" onClick={() => setPollOptions((arr) => [...arr, ''])}>Añadir opción</button>
-              )}
-            </div>
-          )}
-        </div>
-        
-      </form>
-      {error && <p style={{ color: 'var(--primary)' }}>{error}</p>}
-      {show404 && <p style={{ color: 'var(--primary)' }}>Página no encontrada.</p>}
-      <hr />
-      <h3>Feed de Publicaciones</h3>
-      <div>
-        {loading && posts.length === 0 ? (
-          <>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <PostSkeleton key={i} />
-            ))}
-          </>
-        ) : posts.length === 0 ? (
-          <p>No hay publicaciones todavía. ¡Sé el primero!</p>
-        ) : (
-          <>
-            {posts.map((post) => (
-              <Post key={post.id_publicacion} post={post} onDeleted={() => fetchPosts(1, false)} onUpdated={() => fetchPosts(1, false)} />
-            ))}
-            {loadingMore && (
-              <div style={{ marginTop: 12 }}>
-                <PostSkeleton />
+            <button
+              type="submit"
+              disabled={submitting || (!postContent.trim() && files.length === 0)}
+              title="Publicar"
+              aria-label="Publicar"
+              style={{ ...iconBtnStyle(false), marginLeft: 'auto', cursor: 'pointer' }}
+            >
+              <SendIcon />
+              <span style={{ fontWeight: 700 }}>{submitting ? 'Publicando…' : 'Publicar'}</span>
+            </button>
+          </div>
+          {/* Poll creator (optional) */}
+          <div style={{ marginTop: 8, border: '1px solid var(--border)', background: 'var(--surface)', padding: 8, borderRadius: 8 }}>
+            {pollEnabled && (
+              <div style={{ marginTop: 8 }}>
+                <input
+                  type="text"
+                  placeholder="Pregunta de la encuesta"
+                  value={pollQuestion}
+                  onChange={(e) => setPollQuestion(e.target.value)}
+                  style={{ width: '100%', marginBottom: 6 }}
+                />
+                {pollOptions.map((opt, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                    <input
+                      type="text"
+                      placeholder={`Opción ${idx + 1}`}
+                      value={opt}
+                      onChange={(e) => setPollOptions((arr) => arr.map((v, i) => (i === idx ? e.target.value : v)))}
+                      style={{ flex: 1 }}
+                    />
+                    {pollOptions.length > 2 && (
+                      <button type="button" onClick={() => setPollOptions((arr) => arr.filter((_, i) => i !== idx))}>-</button>
+                    )}
+                  </div>
+                ))}
+                {pollOptions.length < 4 && (
+                  <button type="button" onClick={() => setPollOptions((arr) => [...arr, ''])}>Añadir opción</button>
+                )}
               </div>
             )}
-            <div ref={sentinelRef} />
-          </>
-        )}
+          </div>
+          
+        </form>
+        {error && <p style={{ color: 'var(--primary)' }}>{error}</p>}
+        {show404 && <p style={{ color: 'var(--primary)' }}>Página no encontrada.</p>}
+        <hr />
+        <h3>Feed de Publicaciones</h3>
+        <div>
+          {loading && posts.length === 0 ? (
+            <>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <PostSkeleton key={i} />
+              ))}
+            </>
+          ) : posts.length === 0 ? (
+            <p>No hay publicaciones todavía. ¡Sé el primero!</p>
+          ) : (
+            <>
+              {posts.map((post) => (
+                <Post key={post.id_publicacion} post={post} onDeleted={() => fetchPosts(1, false)} onUpdated={() => fetchPosts(1, false)} />
+              ))}
+              {loadingMore && (
+                <div style={{ marginTop: 12 }}>
+                  <PostSkeleton />
+                </div>
+              )}
+              <div ref={sentinelRef} />
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 
