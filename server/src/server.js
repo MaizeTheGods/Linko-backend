@@ -20,9 +20,33 @@ app.use(cors({
 app.use(helmet());
 app.use(express.json());
 
+// Add headers for all responses
+app.use((req, res, next) => {
+  res.set('X-Application-Status', 'OK');
+  res.set('Cache-Control', 'no-cache');
+  next();
+});
+
 // Basic routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Root endpoint for uptime monitoring
+app.get('/', (req, res) => {
+  res.status(200).json({
+    app: 'Linko Backend',
+    status: 'running',
+    uptime: process.uptime()
+  });
 });
 
 // API Routes
