@@ -29,7 +29,6 @@ function formatRelativeEs(dateInput) {
     const n = Math.max(1, day);
     return isFuture ? `dentro de ${n} día${n > 1 ? 's' : ''}` : `hace ${n} día${n > 1 ? 's' : ''}`;
   }
-  // Después de una semana: fecha corta DD/MM/YYYY
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const yyyy = d.getFullYear();
@@ -75,7 +74,6 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
     });
   };
 
-  // Poll (Encuesta) UI
   const [pollChoice, setPollChoice] = useState(null);
   const [pollBusy, setPollBusy] = useState(false);
   const [pollResults, setPollResults] = useState([]);
@@ -93,19 +91,17 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
       setPollResults(results);
       setPollTotal(total);
       setPollSelected(selected);
-      // For compatibility: when selected comes as id_opcion, convert to index
       if (Array.isArray(results) && results.length > 0 && selected != null) {
         const idx = results.findIndex(r => r.id_opcion === selected);
         if (idx >= 0) setPollChoice(idx);
       }
     } catch (e) {
-      // ignore silently to avoid noisy UI
+      // ignore silently
     } finally {
       setPollLoading(false);
     }
   };
 
-  // Defer poll loading until the post is on screen
   const rootRef = useRef(null);
   const onScreen = useOnScreen(rootRef, '200px');
 
@@ -113,7 +109,6 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
     if (onScreen) {
       loadPollResults();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onScreen, post?.id_publicacion]);
 
   const handleVote = async (idx) => {
@@ -126,7 +121,6 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
       await api.post(`/posts/${post.id_publicacion}/poll/vote`, { opcion: idx });
       await loadPollResults();
     } catch {
-      // rollback
       setPollChoice(prev);
       setError('No se pudo registrar tu voto.');
     } finally {
@@ -137,16 +131,13 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
   const handleLike = async (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     setError('');
-    // Optimistic update
     const prevLiked = liked;
     const prevCount = count;
     setLiked(!prevLiked);
     setCount(prevLiked ? prevCount - 1 : prevCount + 1);
-
     try {
       await api.post(`/posts/${post.id_publicacion}/like`, {});
     } catch (e) {
-      // Revert on error
       setLiked(prevLiked);
       setCount(prevCount);
       setError('No se pudo actualizar el Me Gusta.');
@@ -184,7 +175,6 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
     }
   };
 
-  // Abrir comentarios automáticamente si se solicita (por ejemplo, desde notificaciones)
   useEffect(() => {
     let ignore = false;
     (async () => {
@@ -197,7 +187,6 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
       }
     })();
     return () => { ignore = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenComments, post?.id_publicacion]);
 
   const toggleComments = async (e) => {
@@ -220,9 +209,7 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
     try {
       await api.post(`/posts/${post.id_publicacion}/comments`, { texto_comentario: text });
       setNewCommentText('');
-      // Optimistic: increase count
       setCommentsCount((c) => c + 1);
-      // Refresh list
       await loadComments();
     } catch (e) {
       setError('No se pudo publicar el comentario.');
@@ -241,12 +228,12 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
       onClick={() => { if (!inDetail) navigate(`/post/${post.id_publicacion}`); }}
       style={{ cursor: inDetail ? 'default' : 'pointer' }}
     >
-      <h4 style={{ margin: 0 }}>{post.usuario?.nombre_perfil ?? 'Usuario'}</h4>
+      <h4 style={{ margin: 0 }}>{String(post.usuario?.nombre_perfil || 'Usuario')}</h4>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {post.usuario?.nombre_usuario ? (
           <small>
             <Link to={`/perfil/${post.usuario.nombre_usuario}`} style={{ color: 'var(--link)', fontWeight: 600, textDecoration: 'none' }}>
-              @{post.usuario.nombre_usuario}
+              @{String(post.usuario.nombre_usuario)}
             </Link>
           </small>
         ) : (
@@ -288,14 +275,13 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
       )}
       {pollData && Array.isArray(pollData.opciones) && pollData.opciones.length > 1 && (
         <div style={{ marginTop: 10, border: '1px solid var(--border)', backgroundColor: 'var(--surface)', borderRadius: 10, padding: 12 }}>
-          {pollData.pregunta && <div style={{ fontWeight: 600, marginBottom: 8 }}>{pollData.pregunta}</div>}
+          {pollData.pregunta && <div style={{ fontWeight: 600, marginBottom: 8 }}>{String(pollData.pregunta)}</div>}
           <div style={{ display: 'grid', gap: 8 }}>
             {pollLoading ? (
               <div style={{ color: 'var(--muted)' }}>Cargando resultados…</div>
             ) : (
               pollData.opciones.slice(0, 4).map((opt, idx) => {
-                const optText = typeof opt === 'string' ? opt : (opt?.texto || `Opción ${idx + 1}`);
-                // Try to get count from pollResults by orden or text match
+                const optText = String(typeof opt === 'string' ? opt : (opt?.texto || `Opción ${idx + 1}`));
                 const r = pollResults.find(o => o.orden === idx) || pollResults[idx] || null;
                 const votos = r?.votos ?? 0;
                 const pct = pollTotal > 0 ? Math.round((votos * 100) / pollTotal) : 0;
@@ -377,14 +363,13 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
             </button>
             <button
               className="icon-btn"
-              onClick={async () => {
-                // prevent card navigation
-                // (wrapping in async arrow makes getting event harder; rely on confirm modal not to bubble)
+              onClick={async (e) => {
+                e.stopPropagation();
                 if (!window.confirm('¿Eliminar esta publicación?')) return;
                 setBusy(true); setError('');
                 try {
                   await api.delete(`/posts/${post.id_publicacion}`);
-                  if (onDeleted) onDeleted();
+                  if (onDeleted) onDeleted(post.id_publicacion);
                 } catch {
                   setError('No se pudo eliminar la publicación');
                 } finally { setBusy(false); }
@@ -436,7 +421,6 @@ const Post = ({ post, onUpdated, onDeleted, onSavedChanged, autoOpenComments = f
   );
 };
 
-// --- Small UI primitives for action icons ---
 const iconBtnStyle = (active = false) => ({
   display: 'inline-flex',
   alignItems: 'center',

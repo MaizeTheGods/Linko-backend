@@ -105,6 +105,15 @@ const ProfilePage = () => {
   const isOwnProfile = currentUserId && profileData?.id_usuario === currentUserId;
   const bannerUrl = profileData.foto_portada_url || DEFAULT_BANNER;
 
+  // =================================================================
+  // LÍNEA AÑADIDA PARA DEPURACIÓN
+  // Revisa la consola de tu navegador para ver la estructura de los posts.
+  // Esto te ayudará a encontrar el objeto que intentas renderizar en Post.jsx
+  if (profileData.publicaciones?.length) {
+    console.log('Datos de las publicaciones que se envían al componente Post:', profileData.publicaciones);
+  }
+  // =================================================================
+
   return (
     <div className="profile-page">
       {/* Banner */}
@@ -167,8 +176,6 @@ const ProfilePage = () => {
         {!profileData.canViewPosts && profileData.isPrivate ? (
           <p>Este perfil es privado. {isFollowing ? 'Ya sigues a este usuario.' : 'Envía una solicitud para ver sus publicaciones.'}</p>
         ) : profileData.publicaciones?.length ? (
-          // Añade este console.log para ver la estructura de tus posts
-          console.log('Datos de publicaciones:', profileData.publicaciones),
           profileData.publicaciones.map((p) => (
             <Post key={p.id_publicacion} post={p} />
           ))

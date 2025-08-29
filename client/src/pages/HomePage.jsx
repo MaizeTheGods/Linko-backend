@@ -25,6 +25,15 @@ const HomePage = () => {
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef(null);
 
+  const safeApiCall = async (fn) => {
+    try {
+      return await fn();
+    } catch (err) {
+      console.error('API Error:', err);
+      return null;
+    }
+  };
+
   // Clear error after 5 seconds
   useEffect(() => {
     if (show404) {
@@ -38,23 +47,20 @@ const HomePage = () => {
 
   const fetchPosts = async (nextPage = 1, append = false) => {
     try {
-      const response = await api.get('/posts', { params: { page: nextPage, limit } });
-      let data = Array.isArray(response.data) ? response.data : [];
+      const response = await safeApiCall(() => api.get('/posts', { params: { page: nextPage, limit } }));
+      let data = Array.isArray(response?.data) ? response.data : [];
 
       // Helper: mezcla "explore" para rellenar el feed cuando venga vacío o corto
       const maybeBlendExplore = async (current, opts) => {
-        const { pageNum, max } = opts;
         try {
-          const exp = await api.get('/posts/explore', { params: { page: pageNum, limit: max } });
-          let extra = Array.isArray(exp.data) ? exp.data : [];
+          const exp = await safeApiCall(() => api.get('/posts/explore', opts));
+          let extra = Array.isArray(exp?.data) ? exp.data : [];
           // Excluir mis propias publicaciones
-          if (user?.id_usuario) {
-            extra = extra.filter((p) => p?.usuario?.id_usuario !== user.id_usuario);
-          }
+          const userId = user?.id_usuario;
+          if (userId) extra = extra.filter((p) => p?.usuario?.id_usuario !== userId);
           // Evitar duplicados por id_publicacion
           const seen = new Set((current || []).map((p) => p.id_publicacion));
-          extra = extra.filter((p) => !seen.has(p.id_publicacion));
-          return (current || []).concat(extra).slice(0, max);
+          return (current || []).concat(extra.filter((p) => !seen.has(p.id_publicacion))).slice(0, opts.max);
         } catch {
           return current || [];
         }
@@ -125,9 +131,9 @@ const HomePage = () => {
         const form = new FormData();
         files.forEach((f) => form.append('imagenes', f));
         try { 
-          const response = await api.post('/posts', form, {
+          const response = await safeApiCall(() => api.post('/posts', form, {
             headers: { 'Content-Type': 'multipart/form-data' },
-          });
+          }));
           return response.data;
         } catch {}
       }
@@ -145,7 +151,7 @@ const HomePage = () => {
 
       stage = 'createPost';
       try { console.info('[POST_CREATE] sending to /api/posts', { archivos: archivos.length, etiquetas: etiquetas.length, encuesta: !!encuesta }); } catch {}
-      await api.post('/posts', { texto_contenido: postContent.trim(), archivos, etiquetas, encuesta });
+      await safeApiCall(() => api.post('/posts', { texto_contenido: postContent.trim(), archivos, etiquetas, encuesta }));
       try { console.info('[POST_CREATE] success'); } catch {}
       setPostContent('');
       setFiles([]);
