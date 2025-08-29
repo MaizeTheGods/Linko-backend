@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
@@ -25,115 +25,113 @@ function App() {
   const isMobile = useIsMobile(900);
   const location = useLocation();
   return (
-    <Router>
-      <div className="app-shell">
-        <Sidebar />
-        <main>
-          <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
-          <Routes>
-          {/* Rutas Públicas */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/explore" element={<ExplorePage />} />
-          <Route path="/search" element={<SearchPage />} />
-          
-          {/* Ruta Protegida */}
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            } 
-          />
+    <div className="app-shell">
+      <Sidebar />
+      <main>
+        <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
+        <Routes>
+        {/* Rutas Públicas */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/search" element={<SearchPage />} />
+        
+        {/* Ruta Protegida */}
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          } 
+        />
 
-          {/* Básicas del sidebar */}
-          <Route
-            path="/post/:id"
-            element={
-              <ProtectedRoute>
-                <PostDetailPage />
-              </ProtectedRoute>
-            }
-          />
+        {/* Básicas del sidebar */}
+        <Route
+          path="/post/:id"
+          element={
+            <ProtectedRoute>
+              <PostDetailPage />
+            </ProtectedRoute>
+          }
+        />
 
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <MessagesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages/:username"
-            element={
-              <ProtectedRoute>
-                <MessagesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/saved"
-            element={
-              <ProtectedRoute>
-                <SavedPage />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <MessagesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages/:username"
+          element={
+            <ProtectedRoute>
+              <MessagesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/saved"
+          element={
+            <ProtectedRoute>
+              <SavedPage />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Perfil de Usuario (protegido) */}
-          <Route
-            path="/perfil/:username"
-            element={
-              <ProtectedRoute>
-                <ProfilePage key={location.pathname} />
-              </ProtectedRoute>
-            }
-          />
+        {/* Perfil de Usuario (protegido) */}
+        <Route
+          path="/perfil/:username"
+          element={
+            <ProtectedRoute>
+              <ProfilePage key={location.pathname} />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Configuración / Ajustes (protegido) */}
-          <Route
-            path="/settings/profile"
-            element={
-              <ProtectedRoute>
-                <EditProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/account"
-            element={
-              <ProtectedRoute>
-                <AccountSettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings/requests"
-            element={
-              <ProtectedRoute>
-                <FollowRequestsPage />
-              </ProtectedRoute>
-            }
-          />
+        {/* Configuración / Ajustes (protegido) */}
+        <Route
+          path="/settings/profile"
+          element={
+            <ProtectedRoute>
+              <EditProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/account"
+          element={
+            <ProtectedRoute>
+              <AccountSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/requests"
+          element={
+            <ProtectedRoute>
+              <FollowRequestsPage />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-          </Suspense>
-        </main>
-        {!isMobile && <RightAside />}
-      </div>
-    </Router>
+        {/* 404 */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+        </Suspense>
+      </main>
+      {!isMobile && <RightAside />}
+    </div>
   );
 }
 
