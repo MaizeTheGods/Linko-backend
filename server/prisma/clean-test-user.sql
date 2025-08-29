@@ -1,0 +1,1 @@
+﻿DELETE FROM "Usuario" WHERE nombre_usuario = 'testuser';

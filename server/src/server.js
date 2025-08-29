@@ -29,10 +29,12 @@ app.get('/api/health', (req, res) => {
 import authRoutes from './api/authRoutes.js';
 import dmRoutes from './api/dmRoutes.js';
 import notificationRoutes from './api/notificationRoutes.js';
+import postRoutes from './api/postRoutes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/posts', postRoutes);
 
 // Start server
 app.listen(PORT, () => {

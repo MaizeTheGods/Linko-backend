@@ -1,0 +1,1 @@
+﻿INSERT INTO "Usuario" (nombre_usuario, correo_electronico, contrasena_hash, verificado) VALUES ('testuser', 'test@example.com', '\\\', true);

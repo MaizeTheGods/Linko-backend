@@ -122,24 +122,13 @@ const HomePage = () => {
       let archivos = [];
       if (files.length > 0) {
         const form = new FormData();
-        files.forEach((f) => form.append('images', f));
-        // eslint-disable-next-line no-console
-        try { console.info('[UPLOAD] sending to /api/upload'); } catch {}
-        const up = await api.post('/upload', form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        const upData = up.data || {};
-        if (Array.isArray(upData.archivos)) {
-          archivos = upData.archivos.map((a, idx) => ({
-            url: a.url || a.url_archivo,
-            tipo: (a.tipo || a.tipo_archivo || 'IMAGEN').toUpperCase(),
-            orden: idx,
-          })).filter((a) => !!a.url);
-        } else if (Array.isArray(upData.urls)) {
-          // Compatibilidad con respuesta antigua solo-imagen
-          archivos = upData.urls.map((url, idx) => ({ url, tipo: 'IMAGEN', orden: idx }));
-        }
-        try { console.info('[UPLOAD] success', { returned: archivos.length }); } catch {}
+        files.forEach((f) => form.append('imagenes', f));
+        try { 
+          const response = await api.post('/posts', form, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          return response.data;
+        } catch {}
       }
       // Extract etiquetas from content: @username
       const etiquetas = Array.from(new Set((postContent.match(/@([a-zA-Z0-9_]+)/g) || []).map((m) => m.slice(1))));
