@@ -14,8 +14,13 @@ import searchRoutes from './api/searchRoutes.js';
 import notificationsRoutes from './api/notificationsRoutes.js';
 import errorHandler from './src/middleware/errorMiddleware.js';
 import rateLimit from 'express-rate-limit';
-import { body, validationResult } from 'express-validator';
+import { body, validationResult, sanitizeBody } from 'express-validator';
 import helmet from 'helmet';
+import xss from 'xss-clean';
+import csrf from 'csurf';
+import bcrypt from 'bcrypt';
+import { createLogger, transports } from 'winston';
+import 'winston-daily-rotate-file';
 
 // Cargar las variables de entorno del archivo .env
 dotenv.config();
@@ -33,20 +38,25 @@ const allowedOrigins = new Set([
 ].filter(Boolean));
 
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow non-browser requests (e.g., curl, server-to-server)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.has(origin)) return callback(null, true);
-    return callback(new Error('CORS not allowed'), false);
-  },
+  origin: process.env.FRONTEND_URL,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
 app.use(compression()); // Agregar compresión gzip
 app.use(express.json()); // Permite al servidor entender JSON
 app.use(express.urlencoded({ extended: true }));
+app.use(xss()); // XSS Protection
+const csrfProtection = csrf({ cookie: true });
+app.use(csrfProtection); // CSRF Protection
 
 // Security headers
 app.use(helmet());
+app.use(helmet.hsts({
+  maxAge: 63072000,
+  includeSubDomains: true,
+  preload: true
+}));
 app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
@@ -100,6 +110,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Input Sanitization
+app.use(body('*').trim().escape());
+app.use(sanitizeBody('*').escape());
+
 // Ejemplo de validación específica para rutas POST
 app.post('/api/*', [
   body().custom(body => {
@@ -125,6 +139,46 @@ const apiLimiter = rateLimit({
 });
 
 app.use('/api/', apiLimiter);
+
+// Security monitoring setup
+const securityLogger = createLogger({
+  level: 'warn',
+  transports: [
+    new transports.DailyRotateFile({
+      filename: 'logs/security-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '14d'
+    })
+  ]
+});
+
+// Attach to security events
+app.use((req, res, next) => {
+  if (res.statusCode >= 400) {
+    securityLogger.warn(`Security event`, {
+      path: req.path,
+      ip: req.ip,
+      status: res.statusCode,
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+});
+
+// Security logging
+app.use((req, res, next) => {
+  // Log blocked requests
+  if (res.statusCode === 400 || res.statusCode === 403 || res.statusCode === 429) {
+    console.warn(`[SECURITY] Blocked request: ${req.method} ${req.path}`, {
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      reason: res.statusMessage
+    });
+  }
+  next();
+});
 
 // Rutas de la API
 app.get('/api/test', (req, res) => res.json({ message: 'API funcionando' }));
@@ -156,6 +210,7 @@ process.on('unhandledRejection', (reason) => {
   console.error('[UNHANDLED_REJECTION]', { reason: reason?.message || String(reason) });
 });
 process.on('uncaughtException', (err) => {
+  console.error('[SECURITY] Uncaught Exception:', err);
   // eslint-disable-next-line no-console
   console.error('[UNCAUGHT_EXCEPTION]', {
     message: err?.message,
