@@ -5,7 +5,6 @@ import Post from '../components/Post.jsx';
 import PostSkeleton from '../components/PostSkeleton.jsx';
 import { AuthContext } from '../context/AuthContext.jsx';
 import Layout from '../components/Layout.jsx';
-import PageTitle from '../components/PageTitle.jsx';
 
 const HomePage = () => {
   const { user } = useContext(AuthContext);
@@ -157,7 +156,7 @@ const HomePage = () => {
   return (
     <Layout>
       <div style={{ padding: 16 }}>
-        <PageTitle customTitle="Inicio" />
+        <h2 style={{ margin: '6px 0 10px' }}>Inicio</h2>
         <hr />
         <h3>Crear una nueva publicación</h3>
         <form onSubmit={handlePostSubmit}>

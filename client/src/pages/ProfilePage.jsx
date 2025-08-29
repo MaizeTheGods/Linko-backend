@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import api from '../api/http.js';
 import Post from '../components/Post.jsx';
-import PageTitle from '../components/PageTitle.jsx';
 
 const DEFAULT_AVATAR = '/default-avatar.svg';
 const DEFAULT_BANNER = '/default-banner.svg';
@@ -133,7 +132,7 @@ const ProfilePage = () => {
               decoding="async"
             />
             <div className="profile-main">
-              <PageTitle customTitle={profileData.nombre_perfil} />
+              <h2 className="profile-name">{profileData.nombre_perfil}</h2>
               <div className="profile-username">@{profileData.nombre_usuario}</div>
               {profileData.biografia && <p className="profile-bio">{profileData.biografia}</p>}
             </div>
