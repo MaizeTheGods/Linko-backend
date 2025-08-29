@@ -46,6 +46,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Handle OPTIONS requests for CORS preflight
+app.options('*', cors());
+
 // Basic routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
