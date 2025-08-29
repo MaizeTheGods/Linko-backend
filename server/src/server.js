@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
+import crypto from 'crypto';
 
 // Load environment variables
 dotenv.config();
@@ -70,6 +71,30 @@ router.use((err, req, res, next) => {
   const device = req.headers['user-agent'] || 'unknown_device';
   console.error(`[ERROR][${new Date().toISOString()}] ${req.method} ${req.path} - User: ${user}, Device: ${device}`, err);
   res.status(500).json({ error: 'Internal server error' });
+});
+
+// Enhanced request logging middleware
+router.use((req, res, next) => {
+  const start = Date.now();
+  const requestId = crypto.randomUUID();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      requestId,
+      method: req.method,
+      path: req.path,
+      user: req.user?.nombre_usuario || 'anonymous',
+      userId: req.user?.id_usuario || null,
+      ip: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'],
+      status: res.statusCode,
+      durationMs: duration
+    }, null, 2));
+  });
+  
+  next();
 });
 
 app.use('/api/auth', router.use(authRoutes));
