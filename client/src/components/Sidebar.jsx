@@ -137,11 +137,7 @@ const Sidebar = () => {
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   const tokenUsername = getUsernameFromToken();
-  const profilePath = (username || tokenUsername) ? `/profile/${username || tokenUsername}` : '/profile';
-  if (!username && !tokenUsername) {
-    console.error('No username available for profile path');
-    return null; // Or handle this case appropriately
-  }
+  const profilePath = `/profile/${username || tokenUsername || 'user'}`;
 
   // No swipe/drag on mobile; open via button only
 
