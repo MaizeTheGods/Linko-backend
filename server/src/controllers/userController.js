@@ -6,21 +6,18 @@ const prisma = new PrismaClient();
 // Obtener el usuario actual (me)
 export const getMe = async (req, res) => {
   try {
-    const me = await prisma.usuario.findUnique({
-      where: { id_usuario: req.user.id_usuario },
-      select: {
-        id_usuario: true,
-        nombre_usuario: true,
-        nombre_perfil: true,
-        biografia: true,
-        foto_perfil_url: true,
-        foto_portada_url: true,
-        perfil_privado: true,
-        correo_electronico: true,
-      },
+    // First verify the user exists in DB (optional step)
+    const userExists = await prisma.usuario.findUnique({
+      where: { id_usuario: req.user.id },
+      select: { id_usuario: true }
     });
-    if (!me) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json(me);
+    
+    if (!userExists) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    // Return the decoded token data directly (or fetch full user data if needed)
+    res.json(req.user);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener el usuario', details: error.message });
   }

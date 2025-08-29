@@ -1,61 +1,32 @@
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
 
-export const protect = async (req, res, next) => {
-  let token;
+export const protect = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
 
-  // Warn if secret is missing to avoid silent logouts from 401
-  if (!process.env.JWT_SECRET) {
-    // eslint-disable-next-line no-console
-    console.warn('[AUTH WARNING] JWT_SECRET is not defined. All protected routes will fail with 401.');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Acceso denegado. No se proporcionó un token.' });
   }
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      // 1. Obtener el token del header
-      token = req.headers.authorization.split(' ')[1];
+  const token = authHeader.split(' ')[1];
 
-      // 2. Verificar el token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // 3. Adjuntar el usuario del token a la petición (sin la contraseña)
-      req.user = await prisma.usuario.findUnique({
-        where: { id_usuario: decoded.id },
-        select: { id_usuario: true, nombre_usuario: true, correo_electronico: true }
-      });
-
-      next(); // Pasar al siguiente paso (el controlador)
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('[AUTH ERROR]', { message: error?.message, name: error?.name });
-      const msg = !process.env.JWT_SECRET
-        ? 'No autorizado, falta JWT_SECRET en el servidor'
-        : 'No autorizado, token inválido o expirado';
-      res.status(401).json({ message: msg });
-    }
-  }
-
-  if (!token) {
-    res.status(401).json({ message: 'No autorizado, no hay token' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Store decoded token payload directly
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Token inválido o expirado.' });
   }
 };
 
-// Autenticación opcional: si hay token válido adjunta req.user; si no, continua sin error
-export const optionalAuth = async (req, res, next) => {
-  try {
-    const header = req.headers.authorization;
-    if (header && header.startsWith('Bearer ')) {
+export const optionalAuth = (req, res, next) => {
+  const header = req.headers.authorization;
+  if (header && header.startsWith('Bearer ')) {
+    try {
       const token = header.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await prisma.usuario.findUnique({
-        where: { id_usuario: decoded.id },
-        select: { id_usuario: true, nombre_usuario: true, correo_electronico: true }
-      });
+      req.user = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      // Ignore invalid tokens in optional mode
     }
-  } catch (e) {
-    // Si el token es inválido, seguimos sin usuario en modo público
-    req.user = undefined;
   }
   next();
 };
