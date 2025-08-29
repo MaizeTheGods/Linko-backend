@@ -2,7 +2,6 @@ import React, { Suspense, useContext } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext'; // Importamos el contexto
 import ProtectedRoute from './components/ProtectedRoute';
-import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
 
@@ -67,7 +66,6 @@ function AppContent() {
   // --- Layout principal para el resto de la aplicación ---
   return (
     <div className="app-shell">
-      <Sidebar />
       <main>
         <Suspense fallback={<div style={{ padding: 16 }}>Cargando página…</div>}>
           <Routes>
