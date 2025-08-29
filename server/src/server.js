@@ -1,121 +1,186 @@
+// =================================================================
+//  Imports
+// =================================================================
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import crypto from 'crypto';
+import pkg from 'winston';
+import cloudinary from 'cloudinary';
 
-// Load environment variables
+// =================================================================
+//  Importar TODAS las rutas de tu proyecto
+// =================================================================
+import authRoutes from './api/authRoutes.js';
+import commentRoutes from './api/commentRoutes.js';
+import dmRoutes from './api/dmRoutes.js';
+import notificationRoutes from './api/notificationRoutes.js';
+import postRoutes from './api/postRoutes.js';
+import searchRoutes from './api/searchRoutes.js';
+import uploadRoutes from './api/uploadRoutes.js';
+import userRoutes from './api/userRoutes.js';
+
+const { createLogger, transports, format } = pkg;
+const { combine, timestamp, json, simple, colorize } = format;
+
+// =================================================================
+//  Configuración Inicial
+// =================================================================
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Enable CORS
+// =================================================================
+//  Logger (Winston)
+// =================================================================
+const logger = createLogger({
+  level: isProduction ? 'info' : 'debug',
+  format: combine(timestamp(), json()),
+  transports: [
+    new transports.File({ 
+      filename: 'logs/combined.log',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+      tailable: true
+    }),
+    new transports.File({
+      filename: 'logs/critical.log',
+      level: 'warn',
+      maxsize: 10485760, // 10MB
+      maxFiles: 10
+    })
+  ]
+});
+
+if (!isProduction) {
+  logger.add(new transports.Console({
+    format: combine(colorize(), simple())
+  }));
+}
+
+logger.debug('Iniciando la inicialización del servidor...');
+
+// =================================================================
+//  Configuración de Cloudinary
+// =================================================================
+try {
+  cloudinary.v2.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+  logger.info('Cloudinary configurado exitosamente.');
+} catch (err) {
+  logger.error('La configuración de Cloudinary falló:', { message: err.message });
+  process.exit(1);
+}
+
+// =================================================================
+//  Middlewares Esenciales
+// =================================================================
+app.use(helmet());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cors({
   origin: [
+    process.env.FRONTEND_URL, 
     'https://linkosss.vercel.app',
     'https://linko-backend-ggjpdia54-maizethegods-projects.vercel.app',
-    'http://localhost:3000'
-  ],
-  credentials: true
-}));
-
-// Essential middleware
-app.use(cors({
-  origin: [process.env.FRONTEND_URL, 'https://linkosss.vercel.app', 'http://localhost:5173'].filter(Boolean),
-  methods: ['GET', 'POST'],
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ].filter(Boolean),
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
-app.use(helmet());
-app.use(express.json());
-
-// Enhanced logging middleware
-app.use((req, res, next) => {
-  const user = req.user?.nombre_usuario || 'anonymous';
-  const device = req.headers['user-agent'] || 'unknown_device';
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - User: ${user}, Device: ${device}`);
-  next();
-});
-
-// Add headers for all responses
 app.use((req, res, next) => {
   res.set('X-Application-Status', 'OK');
   res.set('Cache-Control', 'no-cache');
   next();
 });
 
-// Handle OPTIONS requests for CORS preflight
-app.options('*', cors());
-
-// Basic routes
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Root endpoint for uptime monitoring
-app.get('/', (req, res) => {
-  res.status(200).json({
-    app: 'Linko Backend',
-    status: 'running',
-    uptime: process.uptime()
-  });
-});
-
-// API Routes
-import authRoutes from './api/authRoutes.js';
-import dmRoutes from './api/dmRoutes.js';
-import notificationRoutes from './api/notificationRoutes.js';
-import postRoutes from './api/postRoutes.js';
-
-// Error handling with enhanced logging
-const router = express.Router();
-router.use((err, req, res, next) => {
-  const user = req.user?.nombre_usuario || 'anonymous';
-  const device = req.headers['user-agent'] || 'unknown_device';
-  console.error(`[ERROR][${new Date().toISOString()}] ${req.method} ${req.path} - User: ${user}, Device: ${device}`, err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// Enhanced request logging middleware
-router.use((req, res, next) => {
+// =================================================================
+//  Middleware de Logging
+// =================================================================
+app.use((req, res, next) => {
   const start = Date.now();
-  const requestId = crypto.randomUUID();
-  
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      requestId,
+    const logData = {
       method: req.method,
       path: req.path,
+      status: res.statusCode,
+      durationMs: duration,
       user: req.user?.nombre_usuario || 'anonymous',
       userId: req.user?.id_usuario || null,
       ip: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
       userAgent: req.headers['user-agent'],
-      status: res.statusCode,
-      durationMs: duration
-    }, null, 2));
+    };
+    logger.info(`Request: ${logData.method} ${logData.path} - ${logData.status}`, logData);
   });
-  
   next();
 });
 
-app.use('/api/auth', router.use(authRoutes));
-app.use('/api/dm', router.use(dmRoutes));
-app.use('/api/notifications', router.use(notificationRoutes));
-app.use('/api/posts', router.use(postRoutes));
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// =================================================================
+//  Rutas Públicas y de Salud
+// =================================================================
+app.get('/', (req, res) => {
+  res.status(200).json({ app: 'Linko Backend', status: 'running', uptime: process.uptime() });
 });
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// =================================================================
+//  Rutas de la API (SECCIÓN CORREGIDA Y COMPLETADA)
+// =================================================================
+logger.info('Montando rutas de la API...');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/dm', dmRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/users', userRoutes);
+
+logger.info('Todas las rutas de la API han sido cargadas exitosamente.');
+
+// =================================================================
+//  Manejo de Errores Centralizado
+// =================================================================
+app.use((err, req, res, next) => {
+  logger.error(`Error no controlado: ${err.message}`, {
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
+  
+  const errorMessage = isProduction ? 'Error interno del servidor' : err.message;
+  res.status(err.statusCode || 500).json({ error: errorMessage });
+});
+
+// =================================================================
+//  Inicio del Servidor
+// =================================================================
+const server = app.listen(PORT, () => {
+  logger.info(`Servidor corriendo en el puerto ${PORT}`);
+});
+
+const gracefulShutdown = (signal) => {
+  logger.warn(`Recibida la señal ${signal}. Apagando el servidor...`);
+  server.close(() => {
+    logger.info('Servidor HTTP cerrado.');
+    process.exit(0);
+  });
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
