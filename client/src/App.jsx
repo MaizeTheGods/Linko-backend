@@ -1,12 +1,12 @@
-import React, { Suspense } from 'react';
-// Se importa 'Navigate' para la redirección
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom'; 
+import React, { Suspense, useContext } from 'react';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AuthContext } from './context/AuthContext'; // Importamos el contexto
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
 
-// Todas tus páginas importadas con lazy loading
+// --- Todas tus páginas importadas con lazy loading ---
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
 const HomePage = React.lazy(() => import('./pages/HomePage'));
@@ -22,17 +22,40 @@ const SavedPage = React.lazy(() => import('./pages/SavedPage.jsx'));
 const SearchPage = React.lazy(() => import('./pages/SearchPage.jsx'));
 const PostDetailPage = React.lazy(() => import('./pages/PostDetailPage.jsx'));
 
-function App() {
+
+// --- Componente interno que contiene toda la lógica de renderizado ---
+function AppContent() {
   const isMobile = useIsMobile(900);
   const location = useLocation();
+  const { loading } = useContext(AuthContext); // Obtenemos el estado de carga del contexto
 
-  // Se determina si estamos en una ruta de autenticación para mostrar un layout diferente
+  // ==================================================================
+  // ESTA ES LA SOLUCIÓN CLAVE
+  // Mientras el AuthContext está verificando el token por primera vez,
+  // mostramos un loader a pantalla completa. Esto detiene la renderización
+  // de cualquier otro componente hasta que sepamos si hay un usuario o no.
+  // ==================================================================
+  if (loading) {
+    return (
+      <div style={{
+        display: 'grid',
+        placeContent: 'center',
+        height: '100vh',
+        backgroundColor: '#121212', // Fondo oscuro para consistencia
+        color: '#FFFFFF'
+      }}>
+        Cargando aplicación...
+      </div>
+    );
+  }
+
+  // Determina si estamos en una ruta de autenticación para usar un layout simple
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
-  // LAYOUT DE AUTENTICACIÓN (pantalla completa, sin barras laterales)
+  // --- Layout para las páginas de Login y Registro (sin barras laterales) ---
   if (isAuthPage) {
     return (
-      <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Cargando…</div>}>
+      <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -41,18 +64,18 @@ function App() {
     );
   }
 
-  // LAYOUT PRINCIPAL DE LA APLICACIÓN (con barras laterales)
+  // --- Layout principal para el resto de la aplicación ---
   return (
     <div className="app-shell">
       <Sidebar />
       <main>
-        <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
+        <Suspense fallback={<div style={{ padding: 16 }}>Cargando página…</div>}>
           <Routes>
-            {/* Rutas Públicas que usan el layout principal */}
+            {/* Rutas Públicas */}
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/search" element={<SearchPage />} />
 
-            {/* Todas las Rutas Protegidas */}
+            {/* Rutas Protegidas */}
             <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
             <Route path="/post/:id" element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
@@ -63,11 +86,11 @@ function App() {
             <Route path="/settings/profile" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
             <Route path="/settings/account" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
             <Route path="/settings/requests" element={<ProtectedRoute><FollowRequestsPage /></ProtectedRoute>} />
-            
-            {/* Ruta para manejar /perfil sin username, redirige al inicio */}
+
+            {/* Ruta de fallback para /perfil sin username */}
             <Route path="/perfil" element={<Navigate to="/" replace state={{ error: 'Debes especificar un nombre de usuario.' }} />} />
 
-            {/* Página 404 para cualquier otra ruta */}
+            {/* Página 404 para cualquier otra ruta no encontrada */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
@@ -75,6 +98,14 @@ function App() {
       {!isMobile && <RightAside />}
     </div>
   );
+}
+
+
+// El componente App ahora solo se encarga de proveer el contexto
+function App() {
+  // NOTA: Es crucial que tu AuthProvider esté envolviendo a <App /> en tu archivo principal (main.jsx o index.js).
+  // Si ya lo tienes así, este componente es perfecto.
+  return <AppContent />;
 }
 
 export default App;
