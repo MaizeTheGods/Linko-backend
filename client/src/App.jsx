@@ -2,8 +2,10 @@ import React, { Suspense, useContext } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext'; // Importamos el contexto
 import ProtectedRoute from './components/ProtectedRoute';
+import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
+import Layout from './components/Layout.jsx';
 
 // --- Todas tus páginas importadas con lazy loading ---
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
@@ -66,7 +68,8 @@ function AppContent() {
   // --- Layout principal para el resto de la aplicación ---
   return (
     <div className="app-shell">
-      <main>
+      <Sidebar />
+      <Layout>
         <Suspense fallback={<div style={{ padding: 16 }}>Cargando página…</div>}>
           <Routes>
             {/* Rutas Públicas */}
@@ -92,7 +95,7 @@ function AppContent() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
-      </main>
+      </Layout>
       {!isMobile && <RightAside />}
     </div>
   );
