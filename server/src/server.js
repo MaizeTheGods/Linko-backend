@@ -25,6 +25,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// API Routes
+import authRoutes from './api/authRoutes.js';
+import dmRoutes from './api/dmRoutes.js';
+import notificationRoutes from './api/notificationRoutes.js';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/dm', dmRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
