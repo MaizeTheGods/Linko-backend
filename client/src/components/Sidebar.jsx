@@ -137,7 +137,7 @@ const Sidebar = () => {
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   const tokenUsername = getUsernameFromToken();
-  const profilePath = `/profile/${username || tokenUsername}`;
+  const profilePath = (username || tokenUsername) ? `/profile/${username || tokenUsername}` : '/profile';
   if (!username && !tokenUsername) {
     console.error('No username available for profile path');
     return null; // Or handle this case appropriately
