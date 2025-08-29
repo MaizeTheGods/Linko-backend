@@ -1,236 +1,54 @@
-// Importar las librerías necesarias
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import compression from 'compression';
-import { PrismaClient } from '@prisma/client';
-import authRoutes from './api/authRoutes.js';
-import userRoutes from './api/userRoutes.js';
-import postRoutes from './api/postRoutes.js';
-import commentRoutes from './api/commentRoutes.js';
-import uploadRoutes from './api/uploadRoutes.js';
-import dmRoutes from './api/dmRoutes.js';
-import searchRoutes from './api/searchRoutes.js';
-import notificationsRoutes from './api/notificationsRoutes.js';
-import errorHandler from './src/middleware/errorMiddleware.js';
-import rateLimit from 'express-rate-limit';
-import pkg from 'express-validator';
-const { body, validationResult } = pkg;
 import helmet from 'helmet';
-import xss from 'xss-clean';
-import csrf from 'csurf';
-import bcrypt from 'bcrypt';
-import { createLogger, transports } from 'winston';
-import 'winston-daily-rotate-file';
 
-// Cargar las variables de entorno del archivo .env
+// Load environment variables
 dotenv.config();
-const prisma = new PrismaClient();
 
-// Inicializar la aplicación de Express
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares (funciones que se ejecutan en cada petición)
-// CORS dinámico para permitir frontend local y el dominio en producción
-const allowedOrigins = new Set([
-  'http://localhost:5173',
-  process.env.FRONTEND_ORIGIN,
-].filter(Boolean));
-
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(cors({
-  origin: process.env.FRONTEND_URL,
+// Essential middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  credentials: true
 }));
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(compression()); // Agregar compresión gzip
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(express.json()); // Permite al servidor entender JSON
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(express.urlencoded({ extended: true }));
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(xss()); // XSS Protection
-const csrfProtection = csrf({ cookie: true });
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(csrfProtection); // CSRF Protection
 
-// Security headers
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(helmet());
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(helmet.hsts({
-  maxAge: 63072000,
-  includeSubDomains: true,
-  preload: true
-}));
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(helmet.contentSecurityPolicy({
+app.use(helmet());
+app.use(express.json());
+
+// Basic routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+import rateLimit from 'express-rate-limit';
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests'
+});
+app.use('/api/', apiLimiter);
+app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
     scriptSrc: ["'self'"],
     styleSrc: ["'self'"],
-    imgSrc: ["'self'"],
+    imgSrc: ["'self'", 'data:'],
     connectSrc: ["'self'"],
     fontSrc: ["'self'"],
-    objectSrc: ["'none'"],
-    mediaSrc: ["'self'"],
-    frameSrc: ["'none'"],
+    objectSrc: ["'none'"]
   }
 }));
-
-// Additional headers
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'same-origin');
-  next();
-});
-
-// Middleware de protección contra fuzzing
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
-  // Limitar tamaño del body
-  if (req.headers['content-length'] > 10000) {
-    return res.status(413).json({ error: 'Payload too large' });
-  }
-
-  // Validar content-type para POST/PUT
-  if (['POST', 'PUT'].includes(req.method) && 
-      !req.headers['content-type']?.includes('application/json')) {
-    return res.status(415).json({ error: 'Unsupported media type' });
-  }
-
-  // Limitar parámetros de query
-  if (Object.keys(req.query).length > 20) {
-    return res.status(400).json({ error: 'Too many query parameters' });
-  }
-
-  next();
-});
-
-// Validación de inputs
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
-  // Limitar profundidad de objetos JSON
-  if (JSON.stringify(req.body).length > 2000) {
-    return res.status(400).json({ error: 'Payload too complex' });
-  }
-  next();
-});
-
-// Input Sanitization
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(body('*').trim().escape());
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(body('*').escape());
-
-// Ejemplo de validación específica para rutas POST
-app.post('/api/*', [
-  body().custom(body => {
-    const size = Buffer.byteLength(JSON.stringify(body));
-    if (size > 1000) throw new Error('Payload too large');
-    return true;
-  })
-], (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-});
-
-// Rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // límite por IP
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: 'Too many requests, please try again later'
-});
-
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/', apiLimiter);
-
-// Security monitoring setup
-const securityLogger = createLogger({
-  level: 'warn',
-  transports: [
-    new transports.DailyRotateFile({
-      filename: 'logs/security-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d'
-    })
-  ]
-});
-
-// Attach to security events
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
-  if (res.statusCode >= 400) {
-    securityLogger.warn(`Security event`, {
-      path: req.path,
-      ip: req.ip,
-      status: res.statusCode,
-      timestamp: new Date().toISOString()
-    });
-  }
-  next();
-});
-
-// Security logging
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
-  // Log blocked requests
-  if (res.statusCode === 400 || res.statusCode === 403 || res.statusCode === 429) {
-    console.warn(`[SECURITY] Blocked request: ${req.method} ${req.path}`, {
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-      reason: res.statusMessage
-    });
-  }
-  next();
-});
-
-// Rutas de la API
-app.get('/api/test', (req, res) => res.json({ message: 'API funcionando' }));
-// Health check con verificación de conexión a la base de datos
-app.get('/api/health', async (req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({ ok: true, db: 'up' });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('[HEALTH_DB_ERROR]', { message: err?.message, code: err?.code });
-    res.status(500).json({ ok: false, db: 'down' });
-  }
-});
-
-// Usar los enrutadores
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/auth', authRoutes);
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/users', userRoutes);
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/posts', postRoutes);
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api', commentRoutes);
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api', uploadRoutes);
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/dm', dmRoutes);
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/search', searchRoutes);
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/notifications', notificationsRoutes);
-
-// Manejo básico de errores no controlados para facilitar el debug
-process.on('unhandledRejection', (reason) => {
-  // eslint-disable-next-line no-console
-  console.error('[UNHANDLED_REJECTION]', { reason: reason?.message || String(reason) });
-});
-process.on('uncaughtException', (err) => {
-  console.error('[SECURITY] Uncaught Exception:', err);
-  // eslint-disable-next-line no-console
-  console.error('[UNCAUGHT_EXCEPTION]', {
-    message: err?.message,
-    stack: err?.stack?.split('\n').slice(0, 3).join(' | '),
-  });
-});
-
-// Error handling (must be last middleware)
-console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(errorHandler);
-
-// Iniciar el servidor para que escuche peticiones
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  try {
-    // eslint-disable-next-line no-console
-    console.log('[CONFIG]', {
-      hasDatabaseUrl: !!process.env.DATABASE_URL,
-      hasJwtSecret: !!process.env.JWT_SECRET,
-      nodeEnv: process.env.NODE_ENV || 'development',
-    });
-  } catch {}
-});
+app.use(helmet.hsts({ maxAge: 31536000 }));
+import authRoutes from './api/authRoutes.js';
+import userRoutes from './api/userRoutes.js';
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
