@@ -139,7 +139,7 @@ const Sidebar = () => {
   const tokenUsername = getUsernameFromToken();
   const profileUser = username || tokenUsername;
   // Align with App routes: use '/perfil/:username'. If no username yet, send to settings page.
-  const profilePath = profileUser ? `/perfil/${profileUser}` : '/settings/profile';
+  const profilePath = profileUser ? `/perfil/${profileUser}` : '/settings';
 
   // No swipe/drag on mobile; open via button only
 
@@ -172,9 +172,13 @@ const Sidebar = () => {
       <NavItem to="/search" title="Buscar">
         <SearchIcon /> <span>Buscar</span>
       </NavItem>
-      <NavItem to={profilePath} title="Perfil">
-        <UserIcon /> <span>Perfil</span>
-      </NavItem>
+      <NavLink 
+        to={`/perfil/${username || tokenUsername}`}
+        className="sidebar-link"
+      >
+        <UserIcon />
+        <span>Perfil</span>
+      </NavLink>
 
       <button
         type="button"
