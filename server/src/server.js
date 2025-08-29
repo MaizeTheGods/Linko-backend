@@ -5,7 +5,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import crypto from 'crypto';
 import pkg from 'winston';
 import cloudinary from 'cloudinary';
 
@@ -133,12 +132,13 @@ app.get('/', (req, res) => {
   res.status(200).json({ app: 'Linko Backend', status: 'running', uptime: process.uptime() });
 });
 
-app.get('/health', (req, res) => {
+// === CAMBIO 1: RUTA DE HEALTH CHECK CORREGIDA PARA RENDER ===
+app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // =================================================================
-//  Rutas de la API (SECCIÓN CORREGIDA Y COMPLETADA)
+//  Rutas de la API
 // =================================================================
 logger.info('Montando rutas de la API...');
 
@@ -170,8 +170,9 @@ app.use((err, req, res, next) => {
 // =================================================================
 //  Inicio del Servidor
 // =================================================================
-const server = app.listen(PORT, () => {
-  logger.info(`Servidor corriendo en el puerto ${PORT}`);
+// === CAMBIO 2: AÑADIDO '0.0.0.0' PARA COMPATIBILIDAD CON RENDER ===
+const server = app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Servidor corriendo en http://0.0.0.0:${PORT}`);
 });
 
 const gracefulShutdown = (signal) => {
