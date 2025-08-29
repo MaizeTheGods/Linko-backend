@@ -20,6 +20,14 @@ app.use(cors({
 app.use(helmet());
 app.use(express.json());
 
+// Enhanced logging middleware
+app.use((req, res, next) => {
+  const user = req.user?.nombre_usuario || 'anonymous';
+  const device = req.headers['user-agent'] || 'unknown_device';
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - User: ${user}, Device: ${device}`);
+  next();
+});
+
 // Add headers for all responses
 app.use((req, res, next) => {
   res.set('X-Application-Status', 'OK');
@@ -55,10 +63,19 @@ import dmRoutes from './api/dmRoutes.js';
 import notificationRoutes from './api/notificationRoutes.js';
 import postRoutes from './api/postRoutes.js';
 
-app.use('/api/auth', authRoutes);
-app.use('/api/dm', dmRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/posts', postRoutes);
+// Error handling with enhanced logging
+const router = express.Router();
+router.use((err, req, res, next) => {
+  const user = req.user?.nombre_usuario || 'anonymous';
+  const device = req.headers['user-agent'] || 'unknown_device';
+  console.error(`[ERROR][${new Date().toISOString()}] ${req.method} ${req.path} - User: ${user}, Device: ${device}`, err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+app.use('/api/auth', router.use(authRoutes));
+app.use('/api/dm', router.use(dmRoutes));
+app.use('/api/notifications', router.use(notificationRoutes));
+app.use('/api/posts', router.use(postRoutes));
 
 // Start server
 app.listen(PORT, () => {
