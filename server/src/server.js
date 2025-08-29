@@ -15,7 +15,7 @@ import notificationsRoutes from './api/notificationsRoutes.js';
 import errorHandler from './src/middleware/errorMiddleware.js';
 import rateLimit from 'express-rate-limit';
 import pkg from 'express-validator';
-const { body, validationResult, sanitizeBody } = pkg;
+const { body, validationResult } = pkg;
 import helmet from 'helmet';
 import xss from 'xss-clean';
 import csrf from 'csurf';
@@ -113,7 +113,7 @@ app.use((req, res, next) => {
 
 // Input Sanitization
 app.use(body('*').trim().escape());
-app.use(sanitizeBody('*').escape());
+app.use(body('*').escape());
 
 // Ejemplo de validación específica para rutas POST
 app.post('/api/*', [
