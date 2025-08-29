@@ -139,7 +139,7 @@ const Sidebar = () => {
   const tokenUsername = getUsernameFromToken();
   const profileUser = username || tokenUsername;
   // Align with App routes: use '/perfil/:username'. If no username yet, send to settings page.
-  const profilePath = profileUser ? `/ProfilePage/${profileUser}` : '/settings/profile';
+  const profilePath = profileUser ? `/perfil/${profileUser}` : '/perfil/me';
 
   // No swipe/drag on mobile; open via button only
 
