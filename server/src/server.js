@@ -12,7 +12,7 @@ import uploadRoutes from './api/uploadRoutes.js';
 import dmRoutes from './api/dmRoutes.js';
 import searchRoutes from './api/searchRoutes.js';
 import notificationsRoutes from './api/notificationsRoutes.js';
-import errorHandler from './middleware/errorMiddleware';
+import errorHandler from './src/middleware/errorMiddleware.js';
 
 // Cargar las variables de entorno del archivo .env
 dotenv.config();
