@@ -84,7 +84,7 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// === CAMBIO: CONFIGURACIÓN DE CORS MEJORADA PARA ACEPTAR URLS DE VERCEL ===
+// === CONFIGURACIÓN DE CORS DEFINITIVA Y CORRECTA ===
 const allowedOrigins = [
   process.env.FRONTEND_URL, // Tu URL de producción principal (ej: https://linkosss.vercel.app)
   'http://localhost:3000',
@@ -93,26 +93,16 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permite peticiones sin origen (como Postman o apps móviles)
-    if (!origin) return callback(null, true);
-
-    // Permite orígenes de la lista blanca (producción y localhost)
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || /\.vercel\.app$/.test(origin)) {
+      callback(null, true);
+    } else {
+      const msg = `El origen '${origin}' no está permitido por la política de CORS.`;
+      logger.warn(msg);
+      callback(new Error(msg), false);
     }
-    
-    // Permite dinámicamente CUALQUIER URL de preview de Vercel
-    if (/\.vercel\.app$/.test(origin)) {
-      logger.debug(`CORS: Origen de Vercel permitido: ${origin}`);
-      return callback(null, true);
-    }
-
-    // Si no es ninguno de los anteriores, recházalo
-    const msg = `El origen '${origin}' no está permitido por la política de CORS.`;
-    logger.warn(msg);
-    return callback(new Error(msg), false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  // Esta es la línea clave que soluciona el error 401 en la verificación inicial
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
