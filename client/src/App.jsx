@@ -1,27 +1,38 @@
 import React, { Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+// Se importa 'Navigate' para la redirección
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'; 
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
 
-// ... (tus importaciones lazy-loaded)
+// Todas tus páginas importadas con lazy loading
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
-// ... etc.
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage.jsx'));
+const ExplorePage = React.lazy(() => import('./pages/ExplorePage.jsx'));
+const EditProfilePage = React.lazy(() => import('./pages/EditProfilePage.jsx'));
+const AccountSettingsPage = React.lazy(() => import('./pages/AccountSettingsPage.jsx'));
+const FollowRequestsPage = React.lazy(() => import('./pages/FollowRequestsPage.jsx'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage.jsx'));
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage.jsx'));
+const MessagesPage = React.lazy(() => import('./pages/MessagesPage.jsx'));
+const SavedPage = React.lazy(() => import('./pages/SavedPage.jsx'));
+const SearchPage = React.lazy(() => import('./pages/SearchPage.jsx'));
+const PostDetailPage = React.lazy(() => import('./pages/PostDetailPage.jsx'));
 
 function App() {
   const isMobile = useIsMobile(900);
   const location = useLocation();
 
-  // === LA SOLUCIÓN ESTÁ AQUÍ ===
-  // Determina si estamos en una ruta de autenticación que no debe tener el layout principal.
+  // Se determina si estamos en una ruta de autenticación para mostrar un layout diferente
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
-  // Si es una página de autenticación, solo renderiza el contenido de esa página.
+  // LAYOUT DE AUTENTICACIÓN (pantalla completa, sin barras laterales)
   if (isAuthPage) {
     return (
-      <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
+      <Suspense fallback={<div style={{ padding: 16, textAlign: 'center' }}>Cargando…</div>}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -30,25 +41,33 @@ function App() {
     );
   }
 
-  // Si NO es una página de autenticación, renderiza el layout principal con las rutas protegidas.
+  // LAYOUT PRINCIPAL DE LA APLICACIÓN (con barras laterales)
   return (
     <div className="app-shell">
       <Sidebar />
       <main>
         <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
           <Routes>
-            {/* Las rutas públicas que SÍ usan el layout principal */}
+            {/* Rutas Públicas que usan el layout principal */}
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/search" element={<SearchPage />} />
 
-            {/* Rutas Protegidas */}
+            {/* Todas las Rutas Protegidas */}
             <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+            <Route path="/post/:id" element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+            <Route path="/messages/:username" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+            <Route path="/saved" element={<ProtectedRoute><SavedPage /></ProtectedRoute>} />
             <Route path="/perfil/:username" element={<ProtectedRoute><ProfilePage key={location.pathname} /></ProtectedRoute>} />
-            {/* ... (todas tus otras rutas protegidas van aquí) ... */}
+            <Route path="/settings/profile" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+            <Route path="/settings/account" element={<ProtectedRoute><AccountSettingsPage /></ProtectedRoute>} />
+            <Route path="/settings/requests" element={<ProtectedRoute><FollowRequestsPage /></ProtectedRoute>} />
             
-            {/* Asegúrate de que login y register no estén aquí para evitar duplicados */}
+            {/* Ruta para manejar /perfil sin username, redirige al inicio */}
+            <Route path="/perfil" element={<Navigate to="/" replace state={{ error: 'Debes especificar un nombre de usuario.' }} />} />
 
-            {/* 404 */}
+            {/* Página 404 para cualquier otra ruta */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
