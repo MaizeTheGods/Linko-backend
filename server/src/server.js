@@ -38,27 +38,27 @@ const allowedOrigins = new Set([
   process.env.FRONTEND_ORIGIN,
 ].filter(Boolean));
 
-console.log("Registering route:", $args[0]); app.use(cors({
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(cors({
   origin: process.env.FRONTEND_URL,
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
-console.log("Registering route:", $args[0]); app.use(compression()); // Agregar compresión gzip
-console.log("Registering route:", $args[0]); app.use(express.json()); // Permite al servidor entender JSON
-console.log("Registering route:", $args[0]); app.use(express.urlencoded({ extended: true }));
-console.log("Registering route:", $args[0]); app.use(xss()); // XSS Protection
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(compression()); // Agregar compresión gzip
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(express.json()); // Permite al servidor entender JSON
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(express.urlencoded({ extended: true }));
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(xss()); // XSS Protection
 const csrfProtection = csrf({ cookie: true });
-console.log("Registering route:", $args[0]); app.use(csrfProtection); // CSRF Protection
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(csrfProtection); // CSRF Protection
 
 // Security headers
-console.log("Registering route:", $args[0]); app.use(helmet());
-console.log("Registering route:", $args[0]); app.use(helmet.hsts({
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(helmet());
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(helmet.hsts({
   maxAge: 63072000,
   includeSubDomains: true,
   preload: true
 }));
-console.log("Registering route:", $args[0]); app.use(helmet.contentSecurityPolicy({
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
     scriptSrc: ["'self'"],
@@ -73,7 +73,7 @@ console.log("Registering route:", $args[0]); app.use(helmet.contentSecurityPolic
 }));
 
 // Additional headers
-console.log("Registering route:", $args[0]); app.use((req, res, next) => {
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -82,7 +82,7 @@ console.log("Registering route:", $args[0]); app.use((req, res, next) => {
 });
 
 // Middleware de protección contra fuzzing
-console.log("Registering route:", $args[0]); app.use((req, res, next) => {
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
   // Limitar tamaño del body
   if (req.headers['content-length'] > 10000) {
     return res.status(413).json({ error: 'Payload too large' });
@@ -103,7 +103,7 @@ console.log("Registering route:", $args[0]); app.use((req, res, next) => {
 });
 
 // Validación de inputs
-console.log("Registering route:", $args[0]); app.use((req, res, next) => {
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
   // Limitar profundidad de objetos JSON
   if (JSON.stringify(req.body).length > 2000) {
     return res.status(400).json({ error: 'Payload too complex' });
@@ -112,8 +112,8 @@ console.log("Registering route:", $args[0]); app.use((req, res, next) => {
 });
 
 // Input Sanitization
-console.log("Registering route:", $args[0]); app.use(body('*').trim().escape());
-console.log("Registering route:", $args[0]); app.use(body('*').escape());
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(body('*').trim().escape());
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(body('*').escape());
 
 // Ejemplo de validación específica para rutas POST
 app.post('/api/*', [
@@ -139,7 +139,7 @@ const apiLimiter = rateLimit({
   message: 'Too many requests, please try again later'
 });
 
-console.log("Registering route:", $args[0]); app.use('/api/', apiLimiter);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/', apiLimiter);
 
 // Security monitoring setup
 const securityLogger = createLogger({
@@ -156,7 +156,7 @@ const securityLogger = createLogger({
 });
 
 // Attach to security events
-console.log("Registering route:", $args[0]); app.use((req, res, next) => {
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
   if (res.statusCode >= 400) {
     securityLogger.warn(`Security event`, {
       path: req.path,
@@ -169,7 +169,7 @@ console.log("Registering route:", $args[0]); app.use((req, res, next) => {
 });
 
 // Security logging
-console.log("Registering route:", $args[0]); app.use((req, res, next) => {
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use((req, res, next) => {
   // Log blocked requests
   if (res.statusCode === 400 || res.statusCode === 403 || res.statusCode === 429) {
     console.warn(`[SECURITY] Blocked request: ${req.method} ${req.path}`, {
@@ -196,14 +196,14 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Usar los enrutadores
-console.log("Registering route:", $args[0]); app.use('/api/auth', authRoutes);
-console.log("Registering route:", $args[0]); app.use('/api/users', userRoutes);
-console.log("Registering route:", $args[0]); app.use('/api/posts', postRoutes);
-console.log("Registering route:", $args[0]); app.use('/api', commentRoutes);
-console.log("Registering route:", $args[0]); app.use('/api', uploadRoutes);
-console.log("Registering route:", $args[0]); app.use('/api/dm', dmRoutes);
-console.log("Registering route:", $args[0]); app.use('/api/search', searchRoutes);
-console.log("Registering route:", $args[0]); app.use('/api/notifications', notificationsRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/auth', authRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/users', userRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/posts', postRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api', commentRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api', uploadRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/dm', dmRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/search', searchRoutes);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use('/api/notifications', notificationsRoutes);
 
 // Manejo básico de errores no controlados para facilitar el debug
 process.on('unhandledRejection', (reason) => {
@@ -220,7 +220,7 @@ process.on('uncaughtException', (err) => {
 });
 
 // Error handling (must be last middleware)
-console.log("Registering route:", $args[0]); app.use(errorHandler);
+console.log("Registering route:", $args[0]); console.log("Registering route:", arguments[0]); app.use(errorHandler);
 
 // Iniciar el servidor para que escuche peticiones
 app.listen(PORT, () => {
