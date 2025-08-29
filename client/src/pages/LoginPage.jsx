@@ -10,6 +10,9 @@ const LoginPage = () => {
     contrasena: '',
   });
   const [error, setError] = useState('');
+  // === MEJORA 1: Añadimos un estado de carga ===
+  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
 
@@ -19,22 +22,21 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return; // Evita envíos múltiples si ya está cargando
+
     setError('');
+    setLoading(true); // Inicia el estado de carga
+
     try {
-      // Llama al endpoint de login
       const response = await api.post('/auth/login', formData);
-
-      // Guarda el token en el navegador
       localStorage.setItem('authToken', response.data.token);
-
-      // Actualiza el contexto para que ProtectedRoute permita el acceso
-      setUser({ loggedIn: true });
-
-      // Redirige al usuario a la página de inicio
+      setUser({ loggedIn: true }); // O podrías decodificar el token y guardar los datos del usuario
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+      setError(err.response?.data?.message || 'Error al iniciar sesión. Revisa tus credenciales.');
       console.error(err);
+    } finally {
+      setLoading(false); // Finaliza el estado de carga, tanto en éxito como en error
     }
   };
 
@@ -43,9 +45,31 @@ const LoginPage = () => {
       <div className="form-card">
         <h2>Iniciar Sesión</h2>
         <form onSubmit={handleSubmit}>
-          <input type="email" name="correo_electronico" placeholder="Correo electrónico" onChange={handleChange} required />
-          <input type="password" name="contrasena" placeholder="Contraseña" onChange={handleChange} required />
-          <button type="submit">Entrar</button>
+          {/* === MEJORA 2: Se añaden etiquetas <label> para accesibilidad === */}
+          <label htmlFor="correo_electronico" className="sr-only">Correo electrónico</label>
+          <input 
+            id="correo_electronico"
+            type="email" 
+            name="correo_electronico" 
+            placeholder="Correo electrónico" 
+            onChange={handleChange} 
+            required 
+          />
+          
+          <label htmlFor="contrasena" className="sr-only">Contraseña</label>
+          <input 
+            id="contrasena"
+            type="password" 
+            name="contrasena" 
+            placeholder="Contraseña" 
+            onChange={handleChange} 
+            required 
+          />
+          
+          {/* El botón ahora se deshabilita mientras carga */}
+          <button type="submit" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
         </form>
         {error && <p className="error-message">{error}</p>}
         <div className="form-footnote">
@@ -57,4 +81,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-
