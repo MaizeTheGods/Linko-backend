@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react'; // Se añade useContext
+import React, { useState, useEffect, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import api from '../api/http.js';
 import useIsMobile from '../hooks/useIsMobile.js';
@@ -38,7 +38,7 @@ function NavItem({ to, title, end, children }) {
 }
 
 const Sidebar = () => {
-  // === CORRECCIÓN PRINCIPAL: Usamos el contexto en lugar de estado local y API calls ===
+  // La información del usuario se obtiene directamente del contexto. ¡Correcto!
   const { user } = useContext(AuthContext);
 
   const [theme, setTheme] = useState(() => {
@@ -46,7 +46,7 @@ const Sidebar = () => {
       const saved = localStorage.getItem('theme');
       if (saved === 'light' || saved === 'dark') return saved;
     }
-    return 'dark'; // Default a oscuro para consistencia
+    return 'dark';
   });
 
   const isMobile = useIsMobile(900);
@@ -59,10 +59,11 @@ const Sidebar = () => {
     return `${cap}+`;
   };
 
-  // Este useEffect para buscar notificaciones y DMs está bien, se mantiene.
   useEffect(() => {
     let canceled = false;
     const fetchCounts = async () => {
+      // Solo intentamos buscar notificaciones si el usuario está logueado
+      if (!user) return; 
       try {
         const { data } = await api.get('/dm');
         const total = Array.isArray(data) ? data.reduce((acc, c) => acc + (c?.unread_count || 0), 0) : 0;
@@ -81,9 +82,8 @@ const Sidebar = () => {
     fetchCounts();
     const id = setInterval(fetchCounts, 30000);
     return () => { canceled = true; clearInterval(id); };
-  }, []);
+  }, [user]); // Dependemos del usuario para volver a buscar si cambia
   
-  // Este useEffect para el tema está bien, se mantiene.
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
@@ -91,9 +91,7 @@ const Sidebar = () => {
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  // === CORRECCIÓN PRINCIPAL: La ruta del perfil es ahora más simple y robusta ===
-  // Si tenemos un usuario en el contexto, usamos su nombre de usuario.
-  // Si no (mientras carga la app o si no está logueado), lo mandamos a la página de login.
+  // La ruta del perfil se genera de forma segura y correcta desde el contexto.
   const profilePath = user?.nombre_usuario ? `/perfil/${user.nombre_usuario}` : '/login';
 
   const AsideContent = (
@@ -101,43 +99,31 @@ const Sidebar = () => {
       <NavItem to="/" end title="Inicio">
         <HomeIcon /> <span>Inicio</span>
       </NavItem>
-      <NavItem to="/saved" title="Guardados">
-        <SavedIcon /> <span>Guardados</span>
+       <NavItem to="/explore" title="Explorar">
+        <ExploreIcon /> <span>Explorar</span>
       </NavItem>
       <NavItem to="/notifications" title="Notificaciones">
         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 12 }}>
           <BellIcon /> <span>Notificaciones</span>
-          {unreadNotifs > 0 && (
-            <Badge>{formatCap(unreadNotifs, 99)}</Badge>
-          )}
+          {unreadNotifs > 0 && <Badge>{formatCap(unreadNotifs, 99)}</Badge>}
         </div>
       </NavItem>
       <NavItem to="/messages" title="Mensajes">
         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 12 }}>
           <MessageIcon /> <span>Mensajes</span>
-          {unreadDMs > 0 && (
-            <Badge>{formatCap(unreadDMs, 4)}</Badge>
-          )}
+          {unreadDMs > 0 && <Badge>{formatCap(unreadDMs, 9)}</Badge>}
         </div>
       </NavItem>
-      <NavItem to="/search" title="Buscar">
+      <NavItem to="/saved" title="Guardados">
+        <SavedIcon /> <span>Guardados</span>
+      </NavItem>
+       <NavItem to="/search" title="Buscar">
         <SearchIcon /> <span>Buscar</span>
       </NavItem>
       <NavItem to={profilePath} title="Perfil">
         <UserIcon /> <span>Perfil</span>
       </NavItem>
-
-      <button
-        type="button"
-        onClick={toggleTheme}
-        title="Alternar tema"
-        aria-label="Alternar tema"
-        style={{
-          ...itemBase,
-          cursor: 'pointer',
-          background: 'transparent',
-        }}
-      >
+      <button type="button" onClick={toggleTheme} title="Alternar tema" style={{...itemBase, cursor: 'pointer', background: 'transparent'}}>
         <ThemeIcon mode={theme} />
         <span>Tema: {theme === 'dark' ? 'Oscuro' : 'Claro'}</span>
       </button>
@@ -158,27 +144,11 @@ const Sidebar = () => {
 
   function MobileItem({ to, title, end, children }) {
     return (
-      <NavLink
-        to={to}
-        end={end}
-        title={title}
-        aria-label={title}
-        style={({ isActive }) => ({
-          ...mobileItemBase,
-          color: 'var(--text)',
-          background: 'transparent',
-          borderTop: isActive ? '2px solid var(--primary)' : '2px solid transparent',
-          position: 'relative',
-        })}
-      >
+      <NavLink to={to} end={end} title={title} aria-label={title} style={({ isActive }) => ({...mobileItemBase, borderTop: isActive ? '2px solid var(--primary)' : '2px solid transparent', position: 'relative'})}>
         <span style={{ position: 'relative' }}>
           {children}
-          {to === '/notifications' && unreadNotifs > 0 && (
-            <Badge style={{ position: 'absolute', top: -6, right: -10 }}>{formatCap(unreadNotifs, 99)}</Badge>
-          )}
-          {to === '/messages' && unreadDMs > 0 && (
-            <Badge style={{ position: 'absolute', top: -6, right: -10 }}>{formatCap(unreadDMs, 4)}</Badge>
-          )}
+          {to === '/notifications' && unreadNotifs > 0 && <Badge style={{ position: 'absolute', top: -6, right: -10 }}>{formatCap(unreadNotifs, 99)}</Badge>}
+          {to === '/messages' && unreadDMs > 0 && <Badge style={{ position: 'absolute', top: -6, right: -10 }}>{formatCap(unreadDMs, 4)}</Badge>}
         </span>
       </NavLink>
     );
@@ -187,7 +157,7 @@ const Sidebar = () => {
   return (
     <nav className="bottom-nav" role="navigation" aria-label="Navegación inferior">
       <MobileItem to="/" end title="Inicio"><HomeIcon /></MobileItem>
-      <MobileItem to="/saved" title="Guardados"><SavedIcon /></MobileItem>
+      <MobileItem to="/explore" title="Explorar"><ExploreIcon /></MobileItem>
       <MobileItem to="/notifications" title="Notificaciones"><BellIcon /></MobileItem>
       <MobileItem to="/messages" title="Mensajes"><MessageIcon /></MobileItem>
       <MobileItem to="/search" title="Buscar"><SearchIcon /></MobileItem>
@@ -196,23 +166,25 @@ const Sidebar = () => {
   );
 };
 
+// --- Todos los componentes de Iconos y Badge están aquí ---
 function HomeIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 10.5l9-7 9 7"/>
-      <path d="M9 21V12h6v9"/>
+      <path d="M3 10.5l9-7 9 7"/><path d="M9 21V12h6v9"/>
     </svg>
   );
 }
-
-// ExploreIcon no se estaba usando, así que lo comento o elimino para limpieza.
-// function ExploreIcon() { ... }
-
+function ExploreIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="M16 8l-4 8-4-4 8-4z"/>
+    </svg>
+  );
+}
 function BellIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 7h18s-3 0-3-7"/>
-      <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      <path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
     </svg>
   );
 }
@@ -233,20 +205,17 @@ function SavedIcon() {
 function SearchIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.35-4.35" />
+      <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
     </svg>
   );
 }
 function UserIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-      <circle cx="12" cy="7" r="4"/>
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
     </svg>
   );
 }
-
 function ThemeIcon({ mode }) {
   if (mode === 'dark') {
     return (
@@ -257,31 +226,13 @@ function ThemeIcon({ mode }) {
   }
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="5"/>
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+      <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
     </svg>
   );
 }
-
 function Badge({ children, style }) {
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        minWidth: 18,
-        height: 18,
-        padding: '0 6px',
-        borderRadius: 9999,
-        background: '#ef4444',
-        color: '#fff',
-        fontSize: 11,
-        lineHeight: '18px',
-        textAlign: 'center',
-        fontWeight: 700,
-        boxShadow: '0 1px 2px rgba(0,0,0,.2)',
-        ...style,
-      }}
-    >
+    <span style={{display: 'inline-block', minWidth: 18, height: 18, padding: '0 6px', borderRadius: 9999, background: '#ef4444', color: '#fff', fontSize: 11, lineHeight: '18px', textAlign: 'center', fontWeight: 700, boxShadow: '0 1px 2px rgba(0,0,0,.2)', ...style}}>
       {children}
     </span>
   );

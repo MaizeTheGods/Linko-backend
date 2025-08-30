@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import api from '../api/http.js';
 import Post from '../components/Post.jsx';
 import PostSkeleton from '../components/PostSkeleton.jsx';
-import { AuthContext } from '../context/AuthContext.jsx'; // 1. Importamos el contexto
+import { AuthContext } from '../context/AuthContext.jsx';
 
 const DEFAULT_AVATAR = '/default-avatar.svg';
 const DEFAULT_BANNER = '/default-banner.svg';
@@ -11,7 +11,7 @@ const DEFAULT_BANNER = '/default-banner.svg';
 const ProfilePage = () => {
   const { username: usernameFromParams } = useParams();
   const navigate = useNavigate();
-  const { user: loggedInUser } = useContext(AuthContext); // 2. Obtenemos el usuario del contexto
+  const { user: loggedInUser } = useContext(AuthContext);
 
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,6 @@ const ProfilePage = () => {
           setIsFollowing(!!fetchedData?.isFollowing);
           setFollowersCount(fetchedData?._count?.seguidores ?? 0);
 
-          // 3. MEJORA: Si la URL era '/perfil/me', la reemplazamos por la URL real
           if (usernameFromParams === 'me' && fetchedData?.nombre_usuario) {
             navigate(`/perfil/${fetchedData.nombre_usuario}`, { replace: true });
           }
@@ -41,7 +40,7 @@ const ProfilePage = () => {
       } catch (e) {
         if (!cancelled) {
           if (e.response?.status === 404) {
-            navigate('/404'); // Redirigimos a una página 404 si el perfil no existe
+            navigate('/404');
           } else {
             setError('No se pudo cargar el perfil.');
           }
@@ -51,20 +50,16 @@ const ProfilePage = () => {
       }
     };
     fetchProfile();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [usernameFromParams, navigate]);
 
   const handleFollowToggle = async () => {
     if (followLoading || !profileData) return;
     setFollowLoading(true);
-
     const prevFollowing = isFollowing;
     const prevCount = followersCount;
     setIsFollowing(!prevFollowing);
     setFollowersCount(prevFollowing ? prevCount - 1 : prevCount + 1);
-
     try {
       const endpoint = `/users/${profileData.id_usuario}/follow`;
       if (prevFollowing) {
@@ -81,29 +76,20 @@ const ProfilePage = () => {
     }
   };
 
-  // 4. MEJORA: Usamos un skeleton para una mejor experiencia de carga
   if (loading) return <ProfileSkeleton />;
   if (error) return <div className="error-message">{error}</div>;
   if (!profileData) return <div className="error-message">No se encontraron los datos del perfil.</div>;
 
   const stats = profileData._count || { publicaciones: 0, seguidores: 0, seguidos: 0 };
-  // 5. MEJORA: Comparamos directamente con el usuario del contexto
   const isOwnProfile = loggedInUser && profileData?.id_usuario === loggedInUser.id;
   const bannerUrl = profileData.foto_portada_url || DEFAULT_BANNER;
 
   return (
     <div className="profile-page">
-      <div
-        className="profile-hero"
-        style={{ backgroundImage: `url(${bannerUrl})` }}
-      >
+      <div className="profile-hero" style={{ backgroundImage: `url(${bannerUrl})` }}>
         <div className="profile-overlay">
           <div className="profile-head">
-            <img
-              src={profileData.foto_perfil_url || DEFAULT_AVATAR}
-              alt="Foto de perfil"
-              className="profile-avatar"
-            />
+            <img src={profileData.foto_perfil_url || DEFAULT_AVATAR} alt="Foto de perfil" className="profile-avatar" />
             <div className="profile-main">
               <h2 className="profile-name">{profileData.nombre_perfil}</h2>
               <div className="profile-username">@{profileData.nombre_usuario}</div>
@@ -116,18 +102,10 @@ const ProfilePage = () => {
               </div>
             ) : (
               <div className="profile-actions" style={{ display: 'flex', gap: 8 }}>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                >
+                <button className="btn btn-primary" onClick={handleFollowToggle} disabled={followLoading}>
                   {followLoading ? 'Cargando…' : (isFollowing ? 'Dejar de seguir' : 'Seguir')}
                 </button>
-                <button
-                  className="btn btn-primary btn-pill"
-                  onClick={() => navigate(`/messages/${profileData.nombre_usuario}?uid=${profileData.id_usuario}`)}
-                  title="Enviar mensaje"
-                >
+                <button className="btn btn-primary btn-pill" onClick={() => navigate(`/messages/${profileData.nombre_usuario}?uid=${profileData.id_usuario}`)} title="Enviar mensaje">
                   Mensaje
                 </button>
               </div>
@@ -142,12 +120,8 @@ const ProfilePage = () => {
       </div>
       <div className="profile-content">
         <h3>Publicaciones</h3>
-        {!profileData.canViewPosts && profileData.isPrivate ? (
-          <p>Este perfil es privado. {isFollowing ? 'Ya sigues a este usuario.' : 'Sigue a este usuario para ver sus publicaciones.'}</p>
-        ) : profileData.publicaciones?.length > 0 ? (
-          profileData.publicaciones.map((p) => (
-            <Post key={p.id_publicacion} post={p} />
-          ))
+        {profileData.publicaciones?.length > 0 ? (
+          profileData.publicaciones.map((p) => <Post key={p.id_publicacion} post={p} />)
         ) : (
           <p>Este usuario aún no tiene publicaciones.</p>
         )}
@@ -156,7 +130,6 @@ const ProfilePage = () => {
   );
 };
 
-// Componente de Skeleton para una mejor UI de carga
 const ProfileSkeleton = () => (
   <div className="profile-page skeleton">
     <div className="profile-hero" style={{ backgroundColor: '#2a2a2a' }}>
