@@ -5,10 +5,11 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import pkg from 'winston';
+import { createLogger, transports, format } from 'winston';
 import cloudinary from 'cloudinary';
 import session from 'express-session';
-const MySQLStore = require('connect-mysql')(session);
+import pgSession from 'connect-pg-simple';
+const { combine, timestamp, json, simple, colorize } = format;
 const redis = require('redis');
 
 // =================================================================
@@ -23,8 +24,7 @@ import searchRoutes from './api/searchRoutes.js';
 import uploadRoutes from './api/uploadRoutes.js';
 import userRoutes from './api/userRoutes.js';
 
-const { createLogger, transports, format } = pkg;
-const { combine, timestamp, json, simple, colorize } = format;
+const PgStore = pgSession(session);
 
 // =================================================================
 //  Configuración Inicial
@@ -103,19 +103,13 @@ app.use((req, res, next) => {
 //  Configuración de Sesión
 // =================================================================
 app.use(session({
-  store: new MySQLStore({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+  store: new PgStore({
+    conString: process.env.SUPABASE_DB_URL
   }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: true,
-    sameSite: 'none'
-  }
+  cookie: { secure: true, sameSite: 'none' }
 }));
 
 // =================================================================
