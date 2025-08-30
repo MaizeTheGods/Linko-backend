@@ -136,10 +136,7 @@ const Sidebar = () => {
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  const tokenUsername = getUsernameFromToken();
-  const profileUser = username || tokenUsername;
-  // Align with App routes: use '/perfil/:username'. If no username yet, send to settings page.
-  const profilePath = profileUser ? `/perfil/${profileUser}` : '/perfil/me';
+  const profilePath = `/perfil/${getUsernameFromToken()}`;
 
   // No swipe/drag on mobile; open via button only
 
