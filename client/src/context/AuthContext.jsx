@@ -1,34 +1,39 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import api from '../api/http.js';
 
-// 1. Creamos el contexto
+// 1. Creamos el contexto que estará disponible en toda la aplicación.
 export const AuthContext = createContext(null);
 
-// 2. Proveedor del contexto que envuelve la app
+// 2. Creamos el componente "Proveedor" que envolverá nuestra aplicación.
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  // Este estado es CRUCIAL. Es true mientras verificamos el token por primera vez.
+  // Este estado es CRUCIAL. Es 'true' mientras verificamos si hay una sesión válida al cargar la app.
   const [loading, setLoading] = useState(true);
 
-  // Usamos useCallback para que la función no se recree innecesariamente
+  // Esta función se encarga de verificar el token al iniciar la aplicación.
+  // Usamos useCallback para optimizar y evitar que se recree en cada render.
   const initializeAuth = useCallback(async () => {
     try {
       const token = localStorage.getItem('authToken');
-      // Si no hay token, no hay nada que hacer. Terminamos de cargar.
+      
+      // Si no hay token en el almacenamiento, no hay sesión. Dejamos de cargar.
       if (!token) {
         setLoading(false);
         return;
       }
-      // Si hay token, lo validamos contra el backend para obtener datos frescos del usuario.
-      const res = await api.get('/users/me');
-      setUser({ ...res.data, loggedIn: true });
-    } catch (e) {
-      // Si la API falla (token inválido/expirado), limpiamos el estado.
-      console.error("Auth initialization failed:", e.message);
-      localStorage.removeItem('authToken'); // Limpiamos el token inválido
+
+      // Si hay un token, lo validamos contra el backend para obtener los datos más recientes del usuario.
+      // Esto también nos protege de tokens expirados o inválidos.
+      const response = await api.get('/users/me');
+      setUser(response.data);
+
+    } catch (error) {
+      // Si la llamada a la API falla, significa que el token es inválido.
+      console.error("Fallo en la inicialización de la autenticación:", error.message);
+      localStorage.removeItem('authToken'); // Limpiamos el token inválido.
       setUser(null);
     } finally {
-      // En cualquier caso (éxito o fallo), marcamos la carga inicial como completada.
+      // Haya éxito o fallo, la verificación inicial ha terminado.
       setLoading(false);
     }
   }, []);
@@ -38,13 +43,17 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, [initializeAuth]);
 
+  // Función para cerrar sesión, que será accesible desde cualquier parte de la app.
   const logout = () => {
     localStorage.removeItem('authToken');
     setUser(null);
   };
 
+  // El valor que compartimos con todos los componentes hijos.
+  const contextValue = { user, setUser, loading, logout };
+
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
