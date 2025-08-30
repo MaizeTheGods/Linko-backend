@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react'; // Se añade useContext
 import { NavLink } from 'react-router-dom';
 import api from '../api/http.js';
 import useIsMobile from '../hooks/useIsMobile.js';
+import { AuthContext } from '../context/AuthContext'; // Importamos el AuthContext
 
 const itemBase = {
   display: 'flex',
@@ -37,38 +38,18 @@ function NavItem({ to, title, end, children }) {
 }
 
 const Sidebar = () => {
-  // Try to get an initial username from the JWT to avoid falling back to settings
-  const getUsernameFromToken = () => {
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-      if (!token) return '';
-      const base64 = token.split('.')[1];
-      const payload = JSON.parse(atob(base64));
-      // Support different claim keys
-      return (
-        payload?.nombre_usuario ||
-        payload?.username ||
-        payload?.user?.username ||
-        ''
-      );
-    } catch {
-      return '';
-    }
-  };
+  // === CORRECCIÓN PRINCIPAL: Usamos el contexto en lugar de estado local y API calls ===
+  const { user } = useContext(AuthContext);
 
-  const [username, setUsername] = useState(getUsernameFromToken());
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
       if (saved === 'light' || saved === 'dark') return saved;
     }
-    return 'light';
+    return 'dark'; // Default a oscuro para consistencia
   });
 
-  // Mobile detection (debounced via requestAnimationFrame in hook)
   const isMobile = useIsMobile(900);
-
-  // Unread counters
   const [unreadDMs, setUnreadDMs] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
 
@@ -78,11 +59,11 @@ const Sidebar = () => {
     return `${cap}+`;
   };
 
+  // Este useEffect para buscar notificaciones y DMs está bien, se mantiene.
   useEffect(() => {
     let canceled = false;
     const fetchCounts = async () => {
       try {
-        // DMs: sum of unread across conversations
         const { data } = await api.get('/dm');
         const total = Array.isArray(data) ? data.reduce((acc, c) => acc + (c?.unread_count || 0), 0) : 0;
         if (!canceled) setUnreadDMs(total);
@@ -90,7 +71,6 @@ const Sidebar = () => {
         if (!canceled) setUnreadDMs(0);
       }
       try {
-        // Notifications: optional endpoint { count }
         const { data } = await api.get('/notifications/unread-count');
         const count = parseInt(data?.count ?? data?.total ?? 0, 10) || 0;
         if (!canceled) setUnreadNotifs(count);
@@ -102,33 +82,8 @@ const Sidebar = () => {
     const id = setInterval(fetchCounts, 30000);
     return () => { canceled = true; clearInterval(id); };
   }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    (async () => {
-      try {
-        const { data } = await api.get('/users/me');
-        const u = data?.nombre_usuario || '';
-        if (isMounted) setUsername(u);
-      } catch (_) {
-        // ignore; falls back to settings/profile
-      }
-    })();
-    return () => { isMounted = false; };
-  }, []);
-
-  // Cargar y aplicar tema persistido
-  useEffect(() => {
-    const stored = localStorage.getItem('theme');
-    if (stored === 'dark' || stored === 'light') {
-      setTheme(stored);
-      document.documentElement.setAttribute('data-theme', stored);
-    } else {
-      setTheme('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }, []);
-
+  
+  // Este useEffect para el tema está bien, se mantiene.
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
@@ -136,17 +91,13 @@ const Sidebar = () => {
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  const tokenUsername = getUsernameFromToken();
-  const profileUser = username || tokenUsername;
-  // Align with App routes: use '/perfil/:username'. If no username yet, send to settings page.
-  const profilePath = profileUser ? `/perfil/${profileUser}` : '/perfil/me';
-
-  // No swipe/drag on mobile; open via button only
-
-  const drawerRef = useRef(null);
+  // === CORRECCIÓN PRINCIPAL: La ruta del perfil es ahora más simple y robusta ===
+  // Si tenemos un usuario en el contexto, usamos su nombre de usuario.
+  // Si no (mientras carga la app o si no está logueado), lo mandamos a la página de login.
+  const profilePath = user?.nombre_usuario ? `/perfil/${user.nombre_usuario}` : '/login';
 
   const AsideContent = (
-    <aside style={{ position: isMobile ? 'relative' : 'sticky', top: 12, alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <aside style={{ position: 'sticky', top: 12, alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <NavItem to="/" end title="Inicio">
         <HomeIcon /> <span>Inicio</span>
       </NavItem>
@@ -154,7 +105,7 @@ const Sidebar = () => {
         <SavedIcon /> <span>Guardados</span>
       </NavItem>
       <NavItem to="/notifications" title="Notificaciones">
-        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 12 }}>
           <BellIcon /> <span>Notificaciones</span>
           {unreadNotifs > 0 && (
             <Badge>{formatCap(unreadNotifs, 99)}</Badge>
@@ -162,7 +113,7 @@ const Sidebar = () => {
         </div>
       </NavItem>
       <NavItem to="/messages" title="Mensajes">
-        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 12 }}>
           <MessageIcon /> <span>Mensajes</span>
           {unreadDMs > 0 && (
             <Badge>{formatCap(unreadDMs, 4)}</Badge>
@@ -184,7 +135,6 @@ const Sidebar = () => {
         style={{
           ...itemBase,
           cursor: 'pointer',
-          borderColor: 'var(--border)',
           background: 'transparent',
         }}
       >
@@ -196,7 +146,6 @@ const Sidebar = () => {
 
   if (!isMobile) return AsideContent;
 
-  // Bottom navigation for mobile
   const mobileItemBase = {
     display: 'flex',
     alignItems: 'center',
@@ -255,14 +204,10 @@ function HomeIcon() {
     </svg>
   );
 }
-function ExploreIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M16 8l-4 8-4-4 8-4z"/>
-    </svg>
-  );
-}
+
+// ExploreIcon no se estaba usando, así que lo comento o elimino para limpieza.
+// function ExploreIcon() { ... }
+
 function BellIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -303,7 +248,6 @@ function UserIcon() {
 }
 
 function ThemeIcon({ mode }) {
-  // Sol simple para claro, luna para oscuro
   if (mode === 'dark') {
     return (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
