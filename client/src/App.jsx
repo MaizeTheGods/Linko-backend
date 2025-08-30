@@ -1,10 +1,11 @@
 import React, { Suspense, useContext } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { AuthContext } from './context/AuthContext'; // Importamos el contexto
+import { AuthContext } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
+// Asumo que tienes un componente Layout que actúa como el contenedor principal del contenido
 import Layout from './components/Layout.jsx';
 
 // --- Todas tus páginas importadas con lazy loading ---
@@ -31,7 +32,7 @@ function AppContent() {
   const { loading } = useContext(AuthContext); // Obtenemos el estado de carga del contexto
 
   // ==================================================================
-  // ESTA ES LA SOLUCIÓN CLAVE
+  // SOLUCIÓN CLAVE A PRUEBA DE ERRORES
   // Mientras el AuthContext está verificando el token por primera vez,
   // mostramos un loader a pantalla completa. Esto detiene la renderización
   // de cualquier otro componente hasta que sepamos si hay un usuario o no.
@@ -42,8 +43,8 @@ function AppContent() {
         display: 'grid',
         placeContent: 'center',
         height: '100vh',
-        backgroundColor: '#121212', // Fondo oscuro para consistencia
-        color: '#FFFFFF'
+        backgroundColor: 'var(--background, #121212)', // Usa tus variables de CSS
+        color: 'var(--text, #FFFFFF)'
       }}>
         Cargando aplicación...
       </div>
@@ -102,10 +103,10 @@ function AppContent() {
 }
 
 
-// El componente App ahora solo se encarga de proveer el contexto
+// El componente App ahora es solo un "contenedor limpio"
+// Su única responsabilidad es asegurarse de que el contexto esté disponible para AppContent
 function App() {
-  // NOTA: Es crucial que tu AuthProvider esté envolviendo a <App /> en tu archivo principal (main.jsx o index.js).
-  // Si ya lo tienes así, este componente es perfecto.
+  // NOTA: Recuerda que <AuthProvider> debe envolver a <App /> en tu archivo `main.jsx`.
   return <AppContent />;
 }
 

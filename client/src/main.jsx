@@ -1,26 +1,26 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import './index.css'
-import App from './App.jsx'
-import { AuthProvider } from './context/AuthContext.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import { AuthProvider } from './context/AuthContext'; // 1. Importamos el proveedor de autenticación
+import './index.css'; // Tu archivo de estilos principal
 
-// Initialize theme before rendering
-(() => {
-  try {
-    const stored = localStorage.getItem('theme');
-    const theme = stored === 'light' || stored === 'dark' ? stored : 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-    if (!stored) localStorage.setItem('theme', theme);
-  } catch {}
-})();
+// Creamos el punto de entrada de la aplicación en el DOM
+const root = ReactDOM.createRoot(document.getElementById('root'));
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
+// 2. Renderizamos la aplicación con la estructura correcta de proveedores
+root.render(
+  <React.StrictMode>
+    {/* BrowserRouter debe envolver a toda la aplicación para que el enrutamiento funcione */}
+    <BrowserRouter>
+      {/* 
+        AuthProvider envuelve a App.
+        Esta es la solución clave: asegura que el contexto de autenticación (user, loading)
+        esté disponible para el componente App y todos sus hijos desde el principio.
+      */}
+      <AuthProvider>
         <App />
-      </BrowserRouter>
-    </AuthProvider>
-  </StrictMode>,
-)
+      </AuthProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
