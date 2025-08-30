@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import pkg from 'winston';
 import cloudinary from 'cloudinary';
+import session from 'express-session';
 
 // =================================================================
 //  Importar TODAS las rutas de tu proyecto
@@ -95,6 +96,21 @@ app.use((req, res, next) => {
   res.set('Cache-Control', 'no-cache');
   next();
 });
+
+// =================================================================
+//  Configuración de Sesión
+// =================================================================
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: true, // Requerido para HTTPS en producción
+    sameSite: 'none', // Necesario para cross-site en Render/Vercel
+    domain: '.onrender.com', // Dominio principal de Render
+    maxAge: 24 * 60 * 60 * 1000 // 1 día
+  }
+}));
 
 // =================================================================
 //  Middleware de Logging

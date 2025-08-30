@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import api from '../api/http.js';
+import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom'; // Se añade Link
 import './Form.css';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -38,7 +38,8 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('auth/login', formData, { withCredentials: true });
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await axios.post(`${apiUrl}/auth/login`, formData, { withCredentials: true });
       const token = response.data.token;
 
       localStorage.setItem('authToken', token);
