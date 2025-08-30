@@ -85,28 +85,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // === CONFIGURACIÓN DE CORS DEFINITIVA Y CORRECTA ===
-const allowedOrigins = [
-  process.env.FRONTEND_URL, // Tu URL de producción principal (ej: https://linkosss.vercel.app)
-  'http://localhost:3000',
-  'http://localhost:5173'
-].filter(Boolean);
-
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1 || /\.vercel\.app$/.test(origin)) {
-      callback(null, true);
-    } else {
-      const msg = `El origen '${origin}' no está permitido por la política de CORS.`;
-      logger.warn(msg);
-      callback(new Error(msg), false);
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  // Esta es la línea clave que soluciona el error 401 en la verificación inicial
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: 'https://linkosss.vercel.app',
   credentials: true
 }));
-// =================================================================
 
 app.use((req, res, next) => {
   res.set('X-Application-Status', 'OK');
