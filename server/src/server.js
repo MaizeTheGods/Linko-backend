@@ -9,8 +9,7 @@ import { createLogger, transports, format } from 'winston';
 import cloudinary from 'cloudinary';
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
-const { combine, timestamp, json, simple, colorize } = format;
-const redis = require('redis');
+import { combine, timestamp, json, simple, colorize } from 'winston/lib/logform';
 
 // =================================================================
 //  Importar TODAS las rutas de tu proyecto
