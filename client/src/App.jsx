@@ -5,8 +5,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
-// Asumo que tienes un componente Layout que actúa como el contenedor principal del contenido
-import Layout from './components/Layout.jsx';
 
 // --- Todas tus páginas importadas con lazy loading ---
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
@@ -24,18 +22,17 @@ const SavedPage = React.lazy(() => import('./pages/SavedPage.jsx'));
 const SearchPage = React.lazy(() => import('./pages/SearchPage.jsx'));
 const PostDetailPage = React.lazy(() => import('./pages/PostDetailPage.jsx'));
 
-
-// --- Componente interno que contiene toda la lógica de renderizado ---
-function AppContent() {
-  const isMobile = useIsMobile(900);
+// --- Componente principal de la aplicación ---
+function App() {
+  const { loading } = useContext(AuthContext);
   const location = useLocation();
-  const { loading } = useContext(AuthContext); // Obtenemos el estado de carga del contexto
+  const isMobile = useIsMobile(900);
 
   // ==================================================================
-  // SOLUCIÓN CLAVE A PRUEBA DE ERRORES
-  // Mientras el AuthContext está verificando el token por primera vez,
-  // mostramos un loader a pantalla completa. Esto detiene la renderización
-  // de cualquier otro componente hasta que sepamos si hay un usuario o no.
+  // SOLUCIÓN CLAVE A PRUEBA DE ERRORES:
+  // Mientras el AuthContext verifica la sesión por primera vez, mostramos
+  // un loader a pantalla completa. Esto detiene el renderizado de cualquier
+  // otro componente hasta que sepamos si hay un usuario o no.
   // ==================================================================
   if (loading) {
     return (
@@ -43,7 +40,7 @@ function AppContent() {
         display: 'grid',
         placeContent: 'center',
         height: '100vh',
-        backgroundColor: 'var(--background, #121212)', // Usa tus variables de CSS
+        backgroundColor: 'var(--bg, #121212)', // Usamos variables de CSS con fallback
         color: 'var(--text, #FFFFFF)'
       }}>
         Cargando aplicación...
@@ -51,10 +48,9 @@ function AppContent() {
     );
   }
 
-  // Determina si estamos en una ruta de autenticación para usar un layout simple
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
-  // --- Layout para las páginas de Login y Registro (sin barras laterales) ---
+  // --- Layout para las páginas de Login y Registro (pantalla completa, sin barras) ---
   if (isAuthPage) {
     return (
       <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
@@ -66,11 +62,11 @@ function AppContent() {
     );
   }
 
-  // --- Layout principal para el resto de la aplicación ---
+  // --- Layout principal para el resto de la aplicación (Sidebar | Contenido | RightAside) ---
   return (
     <div className="app-shell">
-      <Sidebar />
-      <Layout>
+      {!isMobile && <Sidebar />}
+      <main>
         <Suspense fallback={<div style={{ padding: 16 }}>Cargando página…</div>}>
           <Routes>
             {/* Rutas Públicas */}
@@ -96,18 +92,11 @@ function AppContent() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
-      </Layout>
+      </main>
       {!isMobile && <RightAside />}
+      {isMobile && <Sidebar />} {/* En móvil, el Sidebar puede ser una barra inferior */}
     </div>
   );
-}
-
-
-// El componente App ahora es solo un "contenedor limpio"
-// Su única responsabilidad es asegurarse de que el contexto esté disponible para AppContent
-function App() {
-  // NOTA: Recuerda que <AuthProvider> debe envolver a <App /> en tu archivo `main.jsx`.
-  return <AppContent />;
 }
 
 export default App;

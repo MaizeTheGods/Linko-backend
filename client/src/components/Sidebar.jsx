@@ -4,6 +4,7 @@ import api from '../api/http.js';
 import useIsMobile from '../hooks/useIsMobile.js';
 import { AuthContext } from '../context/AuthContext'; // Importamos el AuthContext
 
+// --- Componente NavItem (corregido y mejorado) ---
 const itemBase = {
   display: 'flex',
   alignItems: 'center',
@@ -14,6 +15,7 @@ const itemBase = {
   color: 'var(--text)',
   textDecoration: 'none',
   fontWeight: 600,
+  transition: 'background-color 0.2s, border-color 0.2s', // Transición suave
 };
 
 function NavItem({ to, title, end, children }) {
@@ -32,7 +34,7 @@ function NavItem({ to, title, end, children }) {
       style={({ isActive }) => ({
         ...itemBase,
         borderColor: isActive ? 'var(--primary)' : 'var(--border)',
-        background: isActive ? 'var(--primary-tint)' : (hover ? 'var(--primary-tint)' : 'transparent'),
+        background: isActive ? 'var(--primary-tint)' : (hover ? 'var(--surface)' : 'transparent'),
         cursor: isDisabled ? 'default' : 'pointer',
         opacity: isDisabled ? 0.6 : 1, // Estilo visual para el enlace mientras carga
       })}
@@ -42,8 +44,10 @@ function NavItem({ to, title, end, children }) {
   );
 }
 
+
+// --- Componente Sidebar Principal ---
 const Sidebar = () => {
-  // Obtenemos el usuario Y el estado de carga del contexto. ¡Esta es la clave!
+  // Obtenemos el usuario Y el estado de carga del contexto. ¡Esta es la clave del éxito!
   const { user, loading } = useContext(AuthContext);
 
   const [theme, setTheme] = useState(() => {
@@ -51,7 +55,7 @@ const Sidebar = () => {
       const saved = localStorage.getItem('theme');
       if (saved === 'light' || saved === 'dark') return saved;
     }
-    return 'dark'; // Default a oscuro
+    return 'dark';
   });
 
   const isMobile = useIsMobile(900);
@@ -64,9 +68,8 @@ const Sidebar = () => {
     return `${cap}+`;
   };
 
-  // Este useEffect busca notificaciones y DMs, pero ahora es más inteligente.
   useEffect(() => {
-    // Si no hay usuario, no hacemos nada.
+    // Si no hay usuario, no intentamos buscar notificaciones.
     if (!user) {
       setUnreadDMs(0);
       setUnreadNotifs(0);
@@ -97,7 +100,7 @@ const Sidebar = () => {
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  // Lógica de 3 estados para el enlace de perfil (a prueba de errores)
+  // Lógica de 3 estados para el enlace de perfil (a prueba de "race conditions")
   let profilePath = '#'; // 1. Por defecto: Enlace deshabilitado mientras carga.
   let profileTitle = 'Cargando perfil...';
 
@@ -141,7 +144,6 @@ const Sidebar = () => {
 
   if (!isMobile) return AsideContent;
 
-  // --- Navegación Móvil (completa y corregida) ---
   const mobileItemBase = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0', color: 'var(--text)', textDecoration: 'none', flex: 1 };
   function MobileItem({ to, title, end, children }) {
     return (
