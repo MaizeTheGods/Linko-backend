@@ -38,7 +38,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', formData, { withCredentials: true });
+      const response = await api.post('auth/login', formData, { withCredentials: true });
       const token = response.data.token;
 
       localStorage.setItem('authToken', token);

@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -13,4 +13,18 @@ export default defineConfig({
       webp: { lossless: false },
     }),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://linko-backend.onrender.com',
+        changeOrigin: true,
+        secure: true
+      },
+      '/auth': {
+        target: 'https://linko-backend.onrender.com',
+        changeOrigin: true,
+        secure: true
+      }
+    }
+  }
 })
