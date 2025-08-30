@@ -8,6 +8,8 @@ import helmet from 'helmet';
 import pkg from 'winston';
 import cloudinary from 'cloudinary';
 import session from 'express-session';
+const MySQLStore = require('connect-mysql')(session);
+const redis = require('redis');
 
 // =================================================================
 //  Importar TODAS las rutas de tu proyecto
@@ -101,14 +103,18 @@ app.use((req, res, next) => {
 //  Configuración de Sesión
 // =================================================================
 app.use(session({
+  store: new MySQLStore({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+  }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true, // Requerido para HTTPS en producción
-    sameSite: 'none', // Necesario para cross-site en Render/Vercel
-    domain: '.onrender.com', // Dominio principal de Render
-    maxAge: 24 * 60 * 60 * 1000 // 1 día
+    secure: true,
+    sameSite: 'none'
   }
 }));
 
