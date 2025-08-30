@@ -5,11 +5,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import { createLogger, transports, format } from 'winston';
+import { createLogger, transports } from 'winston';
+import { format } from 'winston';
+const { combine, timestamp, json, simple, colorize } = format;
 import cloudinary from 'cloudinary';
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
-import { combine, timestamp, json, simple, colorize } from 'winston/lib/logform';
 
 // =================================================================
 //  Importar TODAS las rutas de tu proyecto
