@@ -5,8 +5,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar.jsx';
 import RightAside from './components/RightAside.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
+import Layout from './components/Layout.jsx';
 
-// --- Todas tus páginas importadas con lazy loading ---
+// --- Todas tus páginas importadas con lazy loading (Code Splitting) ---
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
 const HomePage = React.lazy(() => import('./pages/HomePage'));
@@ -22,7 +23,7 @@ const SavedPage = React.lazy(() => import('./pages/SavedPage.jsx'));
 const SearchPage = React.lazy(() => import('./pages/SearchPage.jsx'));
 const PostDetailPage = React.lazy(() => import('./pages/PostDetailPage.jsx'));
 
-// --- Componente principal de la aplicación ---
+// --- Componente principal que organiza toda la aplicación ---
 function App() {
   const { loading } = useContext(AuthContext);
   const location = useLocation();
@@ -30,9 +31,10 @@ function App() {
 
   // ==================================================================
   // SOLUCIÓN CLAVE A PRUEBA DE ERRORES:
-  // Mientras el AuthContext verifica la sesión por primera vez, mostramos
-  // un loader a pantalla completa. Esto detiene el renderizado de cualquier
-  // otro componente hasta que sepamos si hay un usuario o no.
+  // Mientras el AuthContext verifica la sesión por primera vez (loading === true),
+  // mostramos un loader a pantalla completa. Esto detiene el renderizado
+  // de CUALQUIER otro componente hasta que sepamos si hay un usuario o no,
+  // eliminando todas las "condiciones de carrera".
   // ==================================================================
   if (loading) {
     return (
@@ -50,7 +52,7 @@ function App() {
 
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
-  // --- Layout para las páginas de Login y Registro (pantalla completa, sin barras) ---
+  // --- Layout para las páginas de Login y Registro (pantalla completa) ---
   if (isAuthPage) {
     return (
       <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
@@ -62,14 +64,15 @@ function App() {
     );
   }
 
-  // --- Layout principal para el resto de la aplicación (Sidebar | Contenido | RightAside) ---
+  // --- Layout principal para el resto de la aplicación ---
   return (
     <div className="app-shell">
-      {!isMobile && <Sidebar />}
+      <Sidebar />
+      {/* Envolvemos el contenido principal en un Layout para consistencia */}
       <main>
         <Suspense fallback={<div style={{ padding: 16 }}>Cargando página…</div>}>
           <Routes>
-            {/* Rutas Públicas */}
+            {/* Rutas Públicas (dentro del layout principal) */}
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/search" element={<SearchPage />} />
 
@@ -94,7 +97,6 @@ function App() {
         </Suspense>
       </main>
       {!isMobile && <RightAside />}
-      {isMobile && <Sidebar />} {/* En móvil, el Sidebar puede ser una barra inferior */}
     </div>
   );
 }

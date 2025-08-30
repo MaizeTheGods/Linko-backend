@@ -15,7 +15,7 @@ const itemBase = {
   color: 'var(--text)',
   textDecoration: 'none',
   fontWeight: 600,
-  transition: 'background-color 0.2s, border-color 0.2s', // Transición suave
+  transition: 'background-color 0.2s, border-color 0.2s, opacity 0.2s', // Transición suave
 };
 
 function NavItem({ to, title, end, children }) {
