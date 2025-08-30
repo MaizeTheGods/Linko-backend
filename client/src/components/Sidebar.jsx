@@ -136,7 +136,7 @@ const Sidebar = () => {
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  const profilePath = `/perfil/${getUsernameFromToken()}`;
+  const profilePath = `/perfil/${username || getUsernameFromToken()}`;
 
   // No swipe/drag on mobile; open via button only
 
