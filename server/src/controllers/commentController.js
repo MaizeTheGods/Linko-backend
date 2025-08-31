@@ -77,3 +77,39 @@ export const deleteComment = async (req, res) => {
     return res.status(404).json({ message: error.message });
   }
 };
+
+// @desc    Responder a un comentario
+// @route   POST /api/posts/:postId/comments/:commentId/replies
+export const replyToComment = async (req, res) => {
+  try {
+    const { content } = req.body;
+    const { postId, commentId } = req.params;
+    const author = req.user.id_usuario;
+    
+    const newReply = new Comment({
+      content,
+      post: postId,
+      author,
+      comentario_padre: commentId
+    });
+    
+    await newReply.save();
+    return res.status(201).json(newReply);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Obtener respuestas de un comentario
+// @route   GET /api/posts/:postId/comments/:commentId/replies
+export const getCommentReplies = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const replies = await Comment.find({ comentario_padre: commentId })
+      .populate('author', 'nombre_usuario nombre_perfil foto_perfil_url');
+    
+    return res.status(200).json(replies);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
