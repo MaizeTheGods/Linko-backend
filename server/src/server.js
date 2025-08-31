@@ -168,6 +168,7 @@ app.get('/health', (req, res) => {
 // =================================================================
 logger.info('Montando rutas de la API...');
 
+// Apply routes with consistent /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/dm', dmRoutes);
