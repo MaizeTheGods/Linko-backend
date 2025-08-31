@@ -70,7 +70,7 @@ logger.debug('Iniciando la inicialización del servidor...');
 // =================================================================
 //  Conexión a MongoDB
 // =================================================================
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.DATABASE_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
