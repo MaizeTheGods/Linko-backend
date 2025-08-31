@@ -14,7 +14,6 @@ import mongoose from 'mongoose';
 //  Importar TODAS las rutas de tu proyecto
 // =================================================================
 import authRoutes from './api/authRoutes.js';
-// ... (el resto de tus rutas)
 import commentRoutes from './api/commentRoutes.js';
 import dmRoutes from './api/dmRoutes.js';
 import notificationRoutes from './api/notificationRoutes.js';
@@ -22,7 +21,6 @@ import postRoutes from './api/postRoutes.js';
 import searchRoutes from './api/searchRoutes.js';
 import uploadRoutes from './api/uploadRoutes.js';
 import userRoutes from './api/userRoutes.js';
-
 
 const { combine, timestamp, json, simple, colorize } = format;
 
