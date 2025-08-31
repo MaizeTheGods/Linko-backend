@@ -8,7 +8,7 @@ import helmet from 'helmet';
 import { createLogger, transports, format } from 'winston';
 import cloudinary from 'cloudinary';
 import session from 'express-session';
-import pgSession from 'connect-pg-simple';
+import mongoose from 'mongoose';
 
 // =================================================================
 //  Importar TODAS las rutas de tu proyecto
@@ -25,7 +25,6 @@ import userRoutes from './api/userRoutes.js';
 
 
 const { combine, timestamp, json, simple, colorize } = format;
-const PgStore = pgSession(session);
 
 // =================================================================
 //  Configuración Inicial
@@ -69,6 +68,16 @@ const logger = createLogger({
 logger.debug('Iniciando la inicialización del servidor...');
 
 // =================================================================
+//  Conexión a MongoDB
+// =================================================================
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => logger.info('Conectado a MongoDB Atlas'))
+.catch(err => logger.error('Error conexión MongoDB:', err));
+
+// =================================================================
 //  Configuración de Cloudinary
 // =================================================================
 try {
@@ -98,21 +107,23 @@ app.use(express.urlencoded({ extended: true }));
 // Esto es VITAL para que el login y las sesiones funcionen.
 app.set('trust proxy', 1);
 
-// === CONFIGURACIÓN DE CORS DEFINITIVA Y CORRECTA ===
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://linkosss.vercel.app', // Usa una variable de entorno
-  credentials: true
-}));
+// Configuración CORS
+const corsOptions = {
+  origin: [
+    'https://tu-app.vercel.app', // Reemplaza con tu dominio Vercel
+    'http://localhost:3000' // Para desarrollo local
+  ],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
 
 // =================================================================
 //  Configuración de Sesión - ADAPTADA PARA PRODUCCIÓN
 // =================================================================
 app.use(session({
-  store: new PgStore({
-    conString: process.env.SUPABASE_DB_URL,
-    // Añade un manejador de errores para la conexión de la sesión
-    pruneSessionInterval: 60 // Limpia sesiones expiradas cada 60 segundos
-  }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
