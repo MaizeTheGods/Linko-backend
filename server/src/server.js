@@ -108,11 +108,26 @@ app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 
 // Configuración CORS
+const whitelist = [
+  'http://localhost:5173',
+  'https://linkosss.vercel.app',
+  /^https:\/\/.*\.vercel\.app$/
+];
+
 const corsOptions = {
-  origin: [
-    'https://tu-app.vercel.app', // Reemplaza con tu dominio Vercel
-    'http://localhost:3000' // Para desarrollo local
-  ],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    if (whitelist.some(allowedOrigin => 
+      typeof allowedOrigin === 'string' 
+        ? allowedOrigin === origin 
+        : allowedOrigin.test(origin)
+    )) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204
