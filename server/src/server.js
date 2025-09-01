@@ -23,25 +23,25 @@ import uploadRoutes from './api/uploadRoutes.js';
 import userRoutes from './api/userRoutes.js';
 
 const { combine, timestamp, json, simple, colorize } = format;
+
 // =================================================================
-//  "Caja Negra" - Atrapa Errores Fatales
+//  "Caja Negra" - Atrapa Errores Fatales ANTES que nada
 // =================================================================
 process.on('unhandledRejection', (reason, promise) => {
   console.error('ERROR GRAVE: Promesa no manejada:', promise, 'razón:', reason);
-  // Aquí podrías usar tu logger si estuviera inicializado, 
-  // pero console.error es más directo para crashes.
 });
 
 process.on('uncaughtException', (error) => {
   console.error('ERROR GRAVE: Excepción no capturada:', error);
   // Es importante salir del proceso después de un error no capturado.
   // Render lo reiniciará automáticamente.
-  process.exit(1); 
+  process.exit(1);
 });
 
 // =================================================================
 //  Configuración Inicial
 // =================================================================
+// En Render, NODE_ENV se establece automáticamente como 'production'
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Carga las variables de .env solo si estamos en desarrollo local
@@ -50,7 +50,7 @@ if (!isProduction) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000; // Render usa la variable PORT
 
 // =================================================================
 //  Logger (Winston) - Adaptado para Producción
@@ -70,6 +70,8 @@ logger.debug('Iniciando la inicialización del servidor...');
 // =================================================================
 //  Conexión a MongoDB
 // =================================================================
+// Las opciones 'useNewUrlParser' y 'useUnifiedTopology' están obsoletas
+// y ya no son necesarias en las versiones modernas de Mongoose.
 mongoose.connect(process.env.DATABASE_URL)
   .then(() => logger.info('Conectado a MongoDB Atlas'))
   .catch(err => logger.error('Error en la conexión a MongoDB:', err));
@@ -96,7 +98,7 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// === ¡VITAL PARA PRODUCCIÓN DETRÁS DE UN PROXY (COMO RENDER)! ===
+// ¡VITAL PARA PRODUCCIÓN DETRÁS DE UN PROXY (COMO RENDER)!
 app.set('trust proxy', 1);
 
 // =================================================================
@@ -105,16 +107,17 @@ app.set('trust proxy', 1);
 const whitelist = [
   'http://localhost:5173',
   'https://linkosss.vercel.app',
-  /^https:\/\/.*\.vercel\.app$/  // <-- ¡ESTA ES LA VERSIÓN CORRECTA!
+  /^https:\/\/.*\.vercel\.app$/ // Expresión regular para TODAS las preview URLs de Vercel
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // Permitir peticiones sin origen (ej: Postman)
     if (!origin) return callback(null, true);
-    
-    if (whitelist.some(allowedOrigin => 
-      typeof allowedOrigin === 'string' 
-        ? allowedOrigin === origin 
+
+    if (whitelist.some(allowedOrigin =>
+      typeof allowedOrigin === 'string'
+        ? allowedOrigin === origin
         : allowedOrigin.test(origin)
     )) {
       callback(null, true);
@@ -155,7 +158,7 @@ app.use(session({
 //  Rutas de Verificación de Salud
 // =================================================================
 app.get('/', (req, res) => {
-  res.status(200).json({ app: 'Linko Backend', status: 'running', uptime: process.uptime() });
+  res.status(200).json({ status: 'EL CODIGO NUEVO ESTA AQUI', version: 'FINAL' });
 });
 
 // =================================================================
