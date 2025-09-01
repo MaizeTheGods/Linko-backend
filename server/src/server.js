@@ -90,7 +90,8 @@ app.set('trust proxy', 1);
 const whitelist = [
   'http://localhost:5173',
   'https://linkosss.vercel.app',
-  /^https:\/\/.*\.vercel\.app$/ // Expresión regular para TODAS las preview URLs de Vercel
+  'https://linko-backend.vercel.app', // <-- ¡AÑADE LA NUEVA URL!
+  /^https:\/\/.*\.vercel\.app$/
 ];
 
 const corsOptions = {
