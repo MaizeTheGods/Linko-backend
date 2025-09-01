@@ -19,7 +19,7 @@ const ExplorePage = () => {
   useEffect(() => {
     const load = async (nextPage = 1, append = false) => {
       try {
-        const res = await api.get('/posts/explore', { params: { page: nextPage, limit, tag: tagParam } });
+        const res = await api.get('posts/explore', { params: { page: nextPage, limit, tag: tagParam } });
         const data = res.data || [];
         setPosts((prev) => (append ? [...prev, ...data] : data));
         setHasMore(data.length === limit);
@@ -48,7 +48,7 @@ const ExplorePage = () => {
         setLoadingMore(true);
         setPage(np);
         // call loader defined in first effect via direct API call here
-        api.get('/posts/explore', { params: { page: np, limit } })
+        api.get('posts/explore', { params: { page: np, limit } })
           .then((res) => {
             const data = res.data || [];
             setPosts((prev) => [...prev, ...data]);
