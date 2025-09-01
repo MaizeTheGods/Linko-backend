@@ -32,7 +32,7 @@ const RegisterPage = () => {
   return (
     <div className="form-container">
       <div className="form-card">
-        <h2>Crear una cuenta</h2>
+        <h2>PRUEBA FINAL DE VERDAD - Crear una cuenta</h2>
         <form onSubmit={handleSubmit}>
           <input type="text" name="nombre_perfil" placeholder="Nombre completo" onChange={handleChange} required />
           <input type="text" name="nombre_usuario" placeholder="Nombre de usuario (@usuario)" onChange={handleChange} required />

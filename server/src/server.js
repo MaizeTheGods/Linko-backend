@@ -158,7 +158,7 @@ app.use(session({
 //  Rutas de Verificación de Salud
 // =================================================================
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'EL CODIGO NUEVO ESTA AQUI', version: 'FINAL' });
+  res.status(200).json({ status: 'EL CODIGO NUEVO Y CORRECTO ESTA AQUI', version: 'FINAL' });
 });
 
 // =================================================================
