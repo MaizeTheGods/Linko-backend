@@ -44,7 +44,7 @@ process.on('uncaughtException', (error) => {
 // =================================================================
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Carga las variables de .env solo si no estamos en producción
+// Carga las variables de .env solo si estamos en desarrollo local
 if (!isProduction) {
   dotenv.config();
 }
@@ -130,10 +130,17 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // =================================================================
-//  Configuración de Sesión - Adaptada para Producción
+//  Configuración de Sesión - A PRUEBA DE BALAS
 // =================================================================
+const sessionSecret = process.env.SESSION_SECRET;
+
+if (!sessionSecret) {
+  logger.error('FATAL ERROR: La variable de entorno SESSION_SECRET no está definida. Saliendo...');
+  process.exit(1); // Detiene la aplicación si el secreto no existe
+}
+
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {
