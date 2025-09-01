@@ -23,6 +23,21 @@ import uploadRoutes from './api/uploadRoutes.js';
 import userRoutes from './api/userRoutes.js';
 
 const { combine, timestamp, json, simple, colorize } = format;
+// =================================================================
+//  "Caja Negra" - Atrapa Errores Fatales
+// =================================================================
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('ERROR GRAVE: Promesa no manejada:', promise, 'razón:', reason);
+  // Aquí podrías usar tu logger si estuviera inicializado, 
+  // pero console.error es más directo para crashes.
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('ERROR GRAVE: Excepción no capturada:', error);
+  // Es importante salir del proceso después de un error no capturado.
+  // Render lo reiniciará automáticamente.
+  process.exit(1); 
+});
 
 // =================================================================
 //  Configuración Inicial
