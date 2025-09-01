@@ -22,6 +22,7 @@ import searchRoutes from './api/searchRoutes.js';
 import uploadRoutes from './api/uploadRoutes.js';
 import userRoutes from './api/userRoutes.js';
 
+
 const { combine, timestamp, json, simple, colorize } = format;
 
 // =================================================================
@@ -29,35 +30,23 @@ const { combine, timestamp, json, simple, colorize } = format;
 // =================================================================
 const isProduction = process.env.NODE_ENV === 'production';
 
-// === EXPLICACIÓN DEL CAMBIO (DOTENV) ===
-// dotenv solo es necesario en desarrollo. En producción (Render),
-// las variables de entorno se inyectan directamente.
+// Carga las variables de .env solo si no estamos en producción
 if (!isProduction) {
   dotenv.config();
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // Render usa la variable PORT
 
 // =================================================================
-//  Logger (Winston) - ADAPTADO PARA PRODUCCIÓN
+//  Logger (Winston) - Adaptado para Producción
 // =================================================================
-// === EXPLICACIÓN DEL CAMBIO (LOGS) ===
-// Render usa un sistema de archivos efímero. Escribir logs a un archivo
-// puede fallar o llenarse rápidamente. La práctica estándar es imprimir
-// logs a la consola (stdout), y la plataforma (Render) se encarga de
-// recolectarlos y mostrarlos en su dashboard.
 const logger = createLogger({
   level: isProduction ? 'info' : 'debug',
-  format: combine(
-    timestamp(),
-    json()
-  ),
+  format: combine(timestamp(), json()),
   transports: [
-    // Eliminamos los transportes de archivo (`new transports.File`)
     new transports.Console({
-      // En desarrollo, usamos un formato simple y con colores para leerlo mejor.
-      // En producción, se usará el formato JSON definido arriba.
+      // En desarrollo, formato simple y con colores. En producción, formato JSON.
       format: isProduction ? json() : combine(colorize(), simple())
     })
   ]
@@ -68,12 +57,11 @@ logger.debug('Iniciando la inicialización del servidor...');
 // =================================================================
 //  Conexión a MongoDB
 // =================================================================
-mongoose.connect(process.env.DATABASE_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => logger.info('Conectado a MongoDB Atlas'))
-.catch(err => logger.error('Error conexión MongoDB:', err));
+// Las opciones 'useNewUrlParser' y 'useUnifiedTopology' están obsoletas
+// y ya no son necesarias en las versiones modernas de Mongoose.
+mongoose.connect(process.env.DATABASE_URL)
+  .then(() => logger.info('Conectado a MongoDB Atlas'))
+  .catch(err => logger.error('Error en la conexión a MongoDB:', err));
 
 // =================================================================
 //  Configuración de Cloudinary
@@ -93,29 +81,34 @@ try {
 // =================================================================
 //  Middlewares Esenciales
 // =================================================================
+// Configuración de seguridad básica con Helmet
 app.use(helmet());
+
+// Middlewares para parsear el cuerpo de las peticiones
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// === EXPLICACIÓN DEL CAMBIO MÁS IMPORTANTE (TRUST PROXY) ===
-// Render (y Vercel, Heroku, etc.) usan un "reverse proxy". El tráfico
-// llega a ellos como HTTPS, pero lo reenvían a tu app como HTTP.
-// Sin esta línea, Express piensa que la conexión no es segura y se
-// negará a enviar cookies con la opción `secure: true`.
-// Esto es VITAL para que el login y las sesiones funcionen.
+// === ¡VITAL PARA PRODUCCIÓN DETRÁS DE UN PROXY (COMO RENDER)! ===
+// Express confiará en la cabecera X-Forwarded-Proto que Render añade,
+// lo que le permite saber que la conexión es segura (HTTPS),
+// lo cual es necesario para que las cookies seguras funcionen.
 app.set('trust proxy', 1);
 
-// Configuración CORS
+// =================================================================
+//  Configuración de CORS - Profesional y Dinámica
+// =================================================================
 const whitelist = [
-  'http://localhost:5173',
-  'https://linkosss.vercel.app',
-  /^https:\/\/.*\.vercel\.app$/
+  'http://localhost:5173',          // Desarrollo local del frontend
+  'https://linkosss.vercel.app',      // URL de producción del frontend
+  /^https:\/\/.*\.vercel\.app$/      // Expresión regular para TODAS las preview URLs de Vercel
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // Permitir peticiones sin origen (ej: Postman)
     if (!origin) return callback(null, true);
     
+    // Comprueba si el origen está en la whitelist (incluyendo la expresión regular)
     if (whitelist.some(allowedOrigin => 
       typeof allowedOrigin === 'string' 
         ? allowedOrigin === origin 
@@ -123,38 +116,33 @@ const corsOptions = {
     )) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('Origen no permitido por CORS'));
     }
   },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
+  credentials: true, // ¡Esencial para que funcionen las sesiones y cookies!
   optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
 
 // =================================================================
-//  Configuración de Sesión - ADAPTADA PARA PRODUCCIÓN
+//  Configuración de Sesión - Adaptada para Producción
 // =================================================================
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    // === EXPLICACIÓN DE LA CONFIGURACIÓN DE COOKIE ===
-    // secure: true -> Solo enviar la cookie sobre HTTPS. Gracias a 'trust proxy', esto ahora funciona en Render.
-    // sameSite: 'none' -> Necesario para peticiones cross-origin (Vercel -> Render). REQUIERE secure: true.
-    // httpOnly: true -> Previene que el JavaScript del cliente acceda a la cookie. Más seguro.
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    httpOnly: true, 
+    secure: isProduction, // Enviar cookie solo sobre HTTPS
+    sameSite: isProduction ? 'none' : 'lax', // 'none' es necesario para cross-origin y requiere 'secure: true'
+    httpOnly: true, // Previene acceso a la cookie desde JavaScript en el cliente
     maxAge: 1000 * 60 * 60 * 24 * 7 // Cookie válida por 7 días
   }
 }));
 
-// El resto de tu código está perfecto, lo mantenemos igual
 // =================================================================
-//  Rutas Públicas y de Salud
+//  Rutas de Verificación de Salud
 // =================================================================
 app.get('/', (req, res) => {
   res.status(200).json({ app: 'Linko Backend', status: 'running', uptime: process.uptime() });
@@ -164,11 +152,9 @@ app.get('/health', (req, res) => {
 });
 
 // =================================================================
-//  Rutas de la API
+//  Rutas de la API (¡Todas con el prefijo /api!)
 // =================================================================
 logger.info('Montando rutas de la API...');
-
-// Apply routes with consistent /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/dm', dmRoutes);
@@ -177,7 +163,6 @@ app.use('/api/posts', postRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);
-
 logger.info('Todas las rutas de la API han sido cargadas exitosamente.');
 
 // =================================================================
@@ -197,15 +182,20 @@ app.use((err, req, res, next) => {
 //  Inicio del Servidor
 // =================================================================
 const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Servidor corriendo en http://0.0.0.0:${PORT}`);
+  logger.info(`Servidor corriendo en el puerto ${PORT}`);
 });
 
+// =================================================================
+//  Cierre Limpio del Servidor (Graceful Shutdown)
+// =================================================================
 const gracefulShutdown = (signal) => {
   logger.warn(`Recibida la señal ${signal}. Apagando el servidor...`);
   server.close(() => {
     logger.info('Servidor HTTP cerrado.');
-    // Aquí podrías cerrar la conexión a la base de datos si fuera necesario
-    process.exit(0);
+    mongoose.connection.close(false, () => {
+      logger.info('Conexión a MongoDB cerrada.');
+      process.exit(0);
+    });
   });
 };
 
