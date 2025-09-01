@@ -22,7 +22,6 @@ import searchRoutes from './api/searchRoutes.js';
 import uploadRoutes from './api/uploadRoutes.js';
 import userRoutes from './api/userRoutes.js';
 
-
 const { combine, timestamp, json, simple, colorize } = format;
 
 // =================================================================
@@ -36,7 +35,7 @@ if (!isProduction) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 10000; // Render usa la variable PORT
+const PORT = process.env.PORT || 10000;
 
 // =================================================================
 //  Logger (Winston) - Adaptado para Producción
@@ -46,7 +45,6 @@ const logger = createLogger({
   format: combine(timestamp(), json()),
   transports: [
     new transports.Console({
-      // En desarrollo, formato simple y con colores. En producción, formato JSON.
       format: isProduction ? json() : combine(colorize(), simple())
     })
   ]
@@ -57,8 +55,6 @@ logger.debug('Iniciando la inicialización del servidor...');
 // =================================================================
 //  Conexión a MongoDB
 // =================================================================
-// Las opciones 'useNewUrlParser' y 'useUnifiedTopology' están obsoletas
-// y ya no son necesarias en las versiones modernas de Mongoose.
 mongoose.connect(process.env.DATABASE_URL)
   .then(() => logger.info('Conectado a MongoDB Atlas'))
   .catch(err => logger.error('Error en la conexión a MongoDB:', err));
@@ -81,34 +77,26 @@ try {
 // =================================================================
 //  Middlewares Esenciales
 // =================================================================
-// Configuración de seguridad básica con Helmet
 app.use(helmet());
-
-// Middlewares para parsear el cuerpo de las peticiones
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // === ¡VITAL PARA PRODUCCIÓN DETRÁS DE UN PROXY (COMO RENDER)! ===
-// Express confiará en la cabecera X-Forwarded-Proto que Render añade,
-// lo que le permite saber que la conexión es segura (HTTPS),
-// lo cual es necesario para que las cookies seguras funcionen.
 app.set('trust proxy', 1);
 
 // =================================================================
 //  Configuración de CORS - Profesional y Dinámica
 // =================================================================
 const whitelist = [
-  'http://localhost:5173',          // Desarrollo local del frontend
-  'https://linkosss.vercel.app',      // URL de producción del frontend
-  /^https:\/\/.*\.vercel\.app$/      // Expresión regular para TODAS las preview URLs de Vercel
+  'http://localhost:5173',
+  'https://linkosss.vercel.app',
+  /^https:\/\/.*\.vercel\.app$/ // Expresión regular para TODAS las preview URLs de Vercel
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Permitir peticiones sin origen (ej: Postman)
     if (!origin) return callback(null, true);
     
-    // Comprueba si el origen está en la whitelist (incluyendo la expresión regular)
     if (whitelist.some(allowedOrigin => 
       typeof allowedOrigin === 'string' 
         ? allowedOrigin === origin 
@@ -120,7 +108,7 @@ const corsOptions = {
     }
   },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true, // ¡Esencial para que funcionen las sesiones y cookies!
+  credentials: true,
   optionsSuccessStatus: 204
 };
 
@@ -134,10 +122,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: isProduction, // Enviar cookie solo sobre HTTPS
-    sameSite: isProduction ? 'none' : 'lax', // 'none' es necesario para cross-origin y requiere 'secure: true'
-    httpOnly: true, // Previene acceso a la cookie desde JavaScript en el cliente
-    maxAge: 1000 * 60 * 60 * 24 * 7 // Cookie válida por 7 días
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 * 7 // 7 días
   }
 }));
 
@@ -146,9 +134,6 @@ app.use(session({
 // =================================================================
 app.get('/', (req, res) => {
   res.status(200).json({ app: 'Linko Backend', status: 'running', uptime: process.uptime() });
-});
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // =================================================================
