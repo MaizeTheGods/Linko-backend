@@ -20,7 +20,8 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/auth/register', formData);
+      // La baseURL ya contiene ".../api", así que aquí solo pones la parte final
+const response = await api.post('auth/register', formData); 
       console.log('Registro exitoso:', response.data);
       navigate('/login');
     } catch (err) {
