@@ -14,7 +14,7 @@ const PostDetailPage = () => {
     (async () => {
       setLoading(true); setError('');
       try {
-        const res = await api.get(`/posts/${id}`);
+        const res = await api.get(`posts/${id}`);
         if (mounted) setPost(res.data);
       } catch (e) {
         if (mounted) setError('No se pudo cargar la publicación.');

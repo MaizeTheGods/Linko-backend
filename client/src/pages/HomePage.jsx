@@ -47,12 +47,12 @@ const HomePage = () => {
 
   const fetchPosts = async (nextPage = 1, append = false) => {
     try {
-      const response = await safeApiCall(() => api.get('/posts', { params: { page: nextPage, limit } }));
+      const response = await safeApiCall(() => api.get('posts', { params: { page: nextPage, limit } }));
       let data = Array.isArray(response?.data) ? response.data : [];
 
       const maybeBlendExplore = async (current, opts) => {
         try {
-          const exp = await safeApiCall(() => api.get('/posts/explore', opts));
+          const exp = await safeApiCall(() => api.get('posts/explore', opts));
           let extra = Array.isArray(exp?.data) ? exp.data : [];
           const userId = user?.id_usuario;
           if (userId) extra = extra.filter((p) => p?.usuario?.id_usuario !== userId);
@@ -117,7 +117,7 @@ const HomePage = () => {
       if (files.length > 0) {
         const form = new FormData();
         files.forEach((f) => form.append('imagenes', f));
-        const response = await safeApiCall(() => api.post('/upload', form, {
+        const response = await safeApiCall(() => api.post('upload', form, {
           headers: { 'Content-Type': 'multipart/form-data' },
         }));
         archivos = response?.data?.urls || [];
@@ -133,7 +133,7 @@ const HomePage = () => {
       }
 
       stage = 'createPost';
-      await safeApiCall(() => api.post('/posts', { texto_contenido: postContent.trim(), archivos, etiquetas, encuesta }));
+      await safeApiCall(() => api.post('posts', { texto_contenido: postContent.trim(), archivos, etiquetas, encuesta }));
       
       setPostContent('');
       setFiles([]);

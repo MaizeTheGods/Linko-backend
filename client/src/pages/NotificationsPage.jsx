@@ -42,10 +42,10 @@ const NotificationsPage = () => {
     (async () => {
       setLoading(true); setError('');
       try {
-        const res = await api.get('/notifications');
+        const res = await api.get('notifications');
         if (mounted) setItems(Array.isArray(res.data) ? res.data : []);
         // Marcar como leídas al abrir la página
-        try { await api.post('/notifications/mark-read'); } catch {}
+        try { await api.post('notifications/mark-read'); } catch {}
       } catch (e) {
         if (mounted) setError('No se pudieron cargar las notificaciones.');
       } finally {

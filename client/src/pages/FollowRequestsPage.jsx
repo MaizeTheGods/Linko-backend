@@ -13,7 +13,7 @@ const FollowRequestsPage = () => {
     setError('');
     setLoading(true);
     try {
-      const { data } = await api.get('/users/me/requests');
+      const { data } = await api.get('users/me/requests');
       setItems(data || []);
     } catch (e) {
       setError('No se pudieron cargar las solicitudes');
@@ -24,7 +24,7 @@ const FollowRequestsPage = () => {
 
   const act = async (id, action) => {
     try {
-      const path = action === 'approve' ? `/users/requests/${id}/approve` : `/users/requests/${id}/reject`;
+      const path = action === 'approve' ? `users/requests/${id}/approve` : `users/requests/${id}/reject`;
       await api.post(path, {});
       setItems((prev) => prev.filter((r) => r.seguidor?.id_usuario !== id));
     } catch (e) {

@@ -13,7 +13,7 @@ const SavedPage = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await api.get(`/posts/saved?page=${p}&limit=20`);
+      const res = await api.get(`posts/saved?page=${p}&limit=20`);
       const data = Array.isArray(res.data) ? res.data : [];
       const normalized = data.map((post) => ({ ...post, saved: post.guardado_por_mi ?? true }));
       setItems((prev) => (p === 1 ? normalized : [...prev, ...normalized]));

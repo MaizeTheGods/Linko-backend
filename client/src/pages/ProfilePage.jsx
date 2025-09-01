@@ -26,7 +26,7 @@ const ProfilePage = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await api.get(`/users/${usernameFromParams}`);
+        const res = await api.get(`users/${usernameFromParams}`);
         if (!cancelled) {
           const fetchedData = res.data;
           setProfileData(fetchedData);
@@ -61,7 +61,7 @@ const ProfilePage = () => {
     setIsFollowing(!prevFollowing);
     setFollowersCount(prevFollowing ? prevCount - 1 : prevCount + 1);
     try {
-      const endpoint = `/users/${profileData.id_usuario}/follow`;
+      const endpoint = `users/${profileData.id_usuario}/follow`;
       if (prevFollowing) {
         await api.delete(endpoint);
       } else {

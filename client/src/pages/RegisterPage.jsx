@@ -20,7 +20,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/auth/register', formData);
+      const response = await api.post('auth/register', formData);
       console.log('Registro exitoso:', response.data);
       navigate('/login');
     } catch (err) {

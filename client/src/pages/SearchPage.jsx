@@ -45,8 +45,8 @@ export default function SearchPage() {
         });
         // parallel requests
         const [uRes, pRes] = await Promise.all([
-          api.get('/search/users', { params: { q: queryCI, limit: 8 } }).catch(() => ({ data: [] })),
-          api.get('/search/posts', { params: { q: queryCI, limit: 12 } }).catch(() => ({ data: [] })),
+          api.get('search/users', { params: { q: queryCI, limit: 8 } }).catch(() => ({ data: [] })),
+          api.get('search/posts', { params: { q: queryCI, limit: 12 } }).catch(() => ({ data: [] })),
         ]);
         setUsers(Array.isArray(uRes.data) ? uRes.data : []);
         setPosts(Array.isArray(pRes.data) ? pRes.data : []);

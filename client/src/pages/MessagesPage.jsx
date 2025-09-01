@@ -161,7 +161,7 @@ const MessagesPage = () => {
         setUploading(true);
         const fd = new FormData();
         for (const f of files) fd.append('images', f);
-        const up = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const up = await api.post('upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         const arr = up.data?.archivos || [];
         for (const a of arr) {
           const url = a?.url || '';
